@@ -1,0 +1,25 @@
+# Raw data from Kaggle (682 MB + 112 MB zip; CC BY-NC-SA, download it from the link in README.md)
+archive/
+archive.zip
+
+# Generated data: rebuilt by running src/load.py ... src/inference.py
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# LaTeX build files (report.tex and report.pdf are kept)
+report/latex/*.aux
+report/latex/*.log
+report/latex/*.out
+report/latex/*.synctex.gz
+report/latex/*.fls
+report/latex/*.fdb_latexmk
+
+# Editor / OS
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store

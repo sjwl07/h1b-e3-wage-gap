@@ -1,0 +1,93 @@
+{
+  "seed": 42,
+  "method": "StratifiedGroupKFold(n_splits=5, shuffle=True), first fold held out",
+  "group": "employer_key",
+  "stratify": "fiscal_year x case_status",
+  "rows_total": 3973349,
+  "rows_explore": 3178679,
+  "rows_confirm": 794670,
+  "confirm_fraction_actual": 0.2,
+  "employers_explore": 132485,
+  "employers_confirm": 33314,
+  "employers_in_both": 0,
+  "top10_employers_in_confirm": [
+    "COGNIZANT TECHNOLOGY SOLUTIONS US",
+    "CAPGEMINI AMERICA"
+  ],
+  "share_by_fiscal_year": {
+    "2017": {
+      "explore_%": 15.72,
+      "confirm_%": 15.72
+    },
+    "2018": {
+      "explore_%": 16.47,
+      "confirm_%": 16.47
+    },
+    "2019": {
+      "explore_%": 16.73,
+      "confirm_%": 16.73
+    },
+    "2020": {
+      "explore_%": 14.53,
+      "confirm_%": 14.53
+    },
+    "2021": {
+      "explore_%": 20.8,
+      "confirm_%": 20.8
+    },
+    "2022": {
+      "explore_%": 15.76,
+      "confirm_%": 15.76
+    }
+  },
+  "share_by_case_status": {
+    "CERTIFIED": {
+      "explore_%": 90.89,
+      "confirm_%": 90.89
+    },
+    "CERTIFIED-WITHDRAWN": {
+      "explore_%": 5.72,
+      "confirm_%": 5.72
+    },
+    "DENIED": {
+      "explore_%": 0.87,
+      "confirm_%": 0.87
+    },
+    "WITHDRAWN": {
+      "explore_%": 2.52,
+      "confirm_%": 2.52
+    }
+  },
+  "share_by_visa_class": {
+    "E-3 Australian": {
+      "explore_%": 2.01,
+      "confirm_%": 1.84
+    },
+    "H-1B": {
+      "explore_%": 97.56,
+      "confirm_%": 97.73
+    },
+    "H-1B1 Chile": {
+      "explore_%": 0.21,
+      "confirm_%": 0.24
+    },
+    "H-1B1 Singapore": {
+      "explore_%": 0.22,
+      "confirm_%": 0.19
+    }
+  },
+  "share_by_full_time": {
+    "N": {
+      "explore_%": 1.8,
+      "confirm_%": 1.66
+    },
+    "Y": {
+      "explore_%": 98.2,
+      "confirm_%": 98.34
+    }
+  },
+  "median_prevailing_wage_year_unit": {
+    "explore": 88005.0,
+    "confirm": 87381.0
+  }
+}

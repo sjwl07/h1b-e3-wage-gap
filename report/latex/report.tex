@@ -1,0 +1,602 @@
+%=======================================================================
+%  CSE558 Data Science - Midterm Project Report
+%  Monsoon 2026, IIIT-Delhi
+%  Built on CSE558_Project_Report_Template.tex. Numbers come from
+%  ../*.md and ../*.json, produced by the scripts in ../../src/.
+%  Compile with pdfLaTeX, twice, from this folder.
+%=======================================================================
+\documentclass[10pt,a4paper,twocolumn]{article}
+
+%========================= EDIT THIS =========================
+\newcommand{\projecttitle}{Same job, higher wage? E-3 versus H-1B filings in
+  US Labor Condition Applications, FY2017--2022}
+\newif\ifshowhints
+\showhintsfalse
+%=============================================================
+
+%-------------------------------------------- fonts (no need to edit)
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \IfFileExists{carlito.sty}%
+    {\usepackage[sfdefault]{carlito}}%              Calibri look
+    {\usepackage[scaled=0.92]{helvet}\renewcommand{\familydefault}{\sfdefault}}%
+  \usepackage{courier}
+\else
+  \usepackage[no-math]{fontspec}
+  \setmainfont{Carlito}[Extension=.ttf, UprightFont=*-Regular, BoldFont=*-Bold,
+    ItalicFont=*-Italic, BoldItalicFont=*-BoldItalic]
+\fi
+
+%----------------------------------------------------------- packages
+\usepackage[margin=18mm,bottom=20mm,columnsep=7mm]{geometry}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{needspace}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={\projecttitle},
+            pdfsubject={CSE558 Data Science, Monsoon 2026: Midterm Project Report}}
+
+%------------------------------------------------------------- layout
+\definecolor{eg}{HTML}{7396C4}
+\definecolor{hintgrey}{gray}{0.58}
+\definecolor{todo}{HTML}{C0392B}       % placeholders still to fill in
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{12pt}{3pt}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{10pt}{2pt}
+\newcommand{\sectionbreak}{\needspace{10\baselineskip}}
+\newcommand{\subsectionbreak}{\needspace{10\baselineskip}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setlist{leftmargin=1.2em, itemsep=2pt, topsep=2pt, parsep=0pt}
+\renewcommand{\arraystretch}{1.25}
+\setlength{\tabcolsep}{4pt}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{K}[1]{>{\raggedright\arraybackslash\bfseries\boldmath}p{#1}}
+
+%--------------------------------------------------------- shorthands
+\newcommand{\hint}[1]{\ifshowhints{\footnotesize\itshape\color{hintgrey}#1\par}\fi}
+\newcommand{\field}[2]{\textbf{#1}~#2\par}
+\newcommand{\tpart}[2]{\par\needspace{12\baselineskip}\smallskip\textbf{#1)~#2}\par}
+\newcommand{\minihead}[1]{\par\needspace{8\baselineskip}\smallskip\textbf{#1}\par}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\todo}[1]{\textcolor{todo}{[#1]}}
+\newcommand{\figfile}[2]{%
+  \IfFileExists{#1}%
+    {\includegraphics[width=\linewidth,height=#2,keepaspectratio]{#1}}%
+    {\fbox{\parbox[c][#2][c]{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}%
+      {\centering\small\itshape\color{hintgrey}Your plot: \detokenize{#1}}}}}
+\newcommand{\figdir}{../../figures/}
+
+%=======================================================================
+\begin{document}
+
+\twocolumn[%
+{\small\bfseries CSE558 Data Science\ \ \textbullet\ \ Midterm Project Report\ \ \textbullet\ \ Monsoon 2026\par}
+\vspace{4pt}
+{\LARGE\bfseries\raggedright\projecttitle\par}
+\vspace{6pt}
+\rule{\linewidth}{1pt}
+
+{\small
+\begin{tabularx}{\linewidth}{@{}K{2.4cm} Y@{}}
+\toprule
+Group name & \todo{Group name} \\
+Dataset & kaggle.com/datasets/jishnukoliyadan/lca-programs-h1b-h1b1-e3-visa-petitions \\
+Code & \todo{github.com/\ldots\ (scripts and README)} \\
+\bottomrule
+\end{tabularx}}
+
+\vspace{2pt}
+{\small
+\begin{tabularx}{\linewidth}{@{}L{0.5cm} L{3.4cm} L{2.3cm} L{4.8cm} Y@{}}
+\toprule
+\textbf{\#} & \textbf{Name} & \textbf{Roll no.} & \textbf{Institute email} & \textbf{Contribution} \\
+\midrule
+1 & \todo{Name 1} & \todo{Roll no.} & \todo{email} & \todo{Contribution} \\
+2 & \todo{Name 2} & \todo{Roll no.} & \todo{email} & \todo{Contribution} \\
+3 & \todo{Name 3} & \todo{Roll no.} & \todo{email} & \todo{Contribution} \\
+4 & \todo{Name 4} & \todo{Roll no.} & \todo{email} & \todo{Contribution} \\
+5 & \todo{Name 5} & \todo{Roll no.} & \todo{email} & \todo{Contribution} \\
+\bottomrule
+\end{tabularx}}
+\vspace{12pt}
+]
+
+%-----------------------------------------------------------------------
+\section{Dataset}
+
+\field{Source:}{Kaggle, ``LCA Programs (H-1B, H-1B1, E-3) Visa Petitions'' (CC BY-NC-SA 4.0), an
+extract of the US Department of Labor's Labor Condition Application (LCA) disclosure data;
+six yearly CSV files, FY2017--2022, downloaded on 21 October 2026. One row is one LCA: an
+employer's filing, required before hiring a foreign worker on an H-1B, H-1B1 or E-3 visa, that
+states the job, the worksite and the \emph{prevailing wage} (the legal minimum DOL sets for that
+occupation, area and wage level). DOL then certifies or denies it.}
+
+\field{What is raw about it:}{the case status is spelled differently before and after FY2020;
+FY2019's wage column holds the \emph{offered} wage, not the prevailing wage; FY2019's worksite is
+blank in 88\% of rows; wages come in five pay units with typing errors (an ``hourly'' wage of
+46{,}301, an annual wage of \$1\,billion); 1{,}769 spellings for about 1{,}100 occupation (SOC)
+titles; 255{,}125 spellings of employer names; 24\% of rows are exact copies of another row.}
+
+{\small
+\begin{tabularx}{\linewidth}{@{}L{2.9cm} Y Y@{}}
+\toprule
+ & \textbf{Raw files} & \textbf{After encoding} \\
+\midrule
+Instances (rows) & 3{,}973{,}349 & 3{,}178{,}679 \\
+Attributes (columns) & 11--12 & 210 \\
+Instances $\times$ attributes & 47{,}680{,}188 & 667{,}522{,}590 \\
+\bottomrule
+\end{tabularx}}
+
+\field{Size check:}{the encoded figure is for the 80\% exploration set alone (the 20\%
+confirmation set is held out, Section~2): $3{,}178{,}679\times210=667{,}522{,}590\ge3{,}000{,}000$.
+The 210 features are 197 one-hot levels (the 50 most common SOC titles plus \code{Other},
+worksite and employer state, year, quarter, visa class, status, pay unit, full-time, region)
+and 13 numeric features and flags. The raw files alone already pass:
+$3{,}973{,}349\times12\approx47.7$M.}
+
+\minihead{Key features}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.65cm} L{1.5cm} Y@{}}
+\toprule
+\textbf{Feature} & \textbf{Type} & \textbf{Real-world meaning} \\
+\midrule
+\code{log\_pw} & continuous & log of the annual prevailing wage (\$15k--\$462k after cleaning); response for P1 \\
+\code{case\_status} & nominal & DOL decision: certified (90.9\%), certified-withdrawn, withdrawn, denied (0.9\%); \code{denied} is the response for P2 \\
+\code{visa\_class} & nominal & H-1B (97.6\%), E-3 Australian (2.0\%), H-1B1 Chile/Singapore (0.4\%) \\
+\code{soc\_title} & nominal & occupation, 1{,}123 titles after cleaning; 30\% are ``Software Developers, Applications'' \\
+\code{worksite\_state} & nominal & where the worker will work, 55 states and territories \\
+\code{fiscal\_year} & discrete & US fiscal year of the decision, 2017--2022 \\
+\code{employer\_key} & nominal (ID) & normalised employer name, 165{,}799 employers; used for grouping, not encoded \\
+\code{employer\_volume} & discrete & derived: filings by that employer that year, 1--21{,}448 \\
+\code{full\_time} & nominal & full-time position (98.2\%) \\
+\bottomrule
+\end{tabularx}}
+
+%-----------------------------------------------------------------------
+\section{Data preparation}
+All rules were fitted on the exploration set and saved; the confirmation set was later cleaned
+with the same saved rules, never re-fitted. No rows are dropped: every row keeps a valid case
+decision, so a bad wage is set to missing and flagged instead.
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{1.95cm} L{2.35cm} Y@{}}
+\toprule
+\textbf{Issue found} & \textbf{What we did} & \textbf{Why, and not the alternative} \\
+\midrule
+hypotheses would come from EDA
+ & split 80/20 \emph{before} any EDA: stratified group k-fold, grouped by employer, stratified by year $\times$ status, seed 42
+ & testing on the data that suggested a hypothesis is circular. Grouping keeps one employer's near-identical filings out of both sets; a random split would leak them \\
+status spelled two ways (upper case before FY2020, title case after)
+ & mapped to 4 labels
+ & otherwise the same decision counts as two levels \\
+\bottomrule
+\end{tabularx}}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{1.95cm} L{2.35cm} Y@{}}
+\toprule
+\textbf{Issue found} & \textbf{What we did} & \textbf{Why, and not the alternative} \\
+\midrule
+FY2019 wage column is the offered wage
+ & kept as a separate column; FY2019's prevailing wage left missing
+ & 39\% of FY2019 values are whole thousands, against under 1\% in every other year, and the median per SOC title jumps $+14.5\%$ then falls $-8\%$. Merging would shift FY2019 wages up about 10\% \\
+777{,}688 exact duplicate rows (24\%)
+ & \textbf{kept}, counted in \code{n\_identical}
+ & there's no case number, and in DOL's source every row is a separate LCA. The duplicate share rises with employer size (18\% $\to$ 55\%) and differs by status (36\% certified vs 16\% withdrawn), which an export glitch wouldn't cause. Dropping would delete real filings of big employers; their correlation is handled by clustering (Section~5) \\
+wrong pay unit (``Hour'' $=46{,}301$)
+ & 427 relabelled to Year
+ & rule: value $\times$ unit $>\$1$M/year but the value itself is a normal salary (\$15k--\$1M); fixing keeps a valid wage \\
+five pay units
+ & annualised ($\times$2080, 52, 26, 12)
+ & puts all wages on one scale (2{,}080\,h = DOL's full-time year) \\
+\bottomrule
+\end{tabularx}}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{1.95cm} L{2.35cm} Y@{}}
+\toprule
+\textbf{Issue found} & \textbf{What we did} & \textbf{Why, and not the alternative} \\
+\midrule
+101 wages of \$0 or with no unit
+ & set to missing
+ & impossible values; the row's decision is still valid \\
+1{,}769 SOC title spellings (codes glued on, typos, plurals)
+ & merged to 1{,}123 titles: letters-only key without plurals, then fuzzy match (similarity $\ge0.92$) of rare spellings
+ & exact matching leaves e.g.\ ``15-1121.00Computer\-systems\-analysts'' as a separate job. We checked the merges by hand; a looser cutoff wrongly joined ``Electrical'' and ``Electronics'' engineers \\
+wage outliers (\$1B ``annual'' wage)
+ & IQR fence (1.5) on \emph{log} wage \emph{within} SOC title; 21{,}579 wages set to missing and flagged
+ & log, because wages are right-skewed; within title, because \$200k is normal for a surgeon, not a cook. Setting the wage (not the row) to missing keeps the case decision \\
+employer country blank (100{,}916) or ``Georgia''
+ & set to USA when the employer state is a US state
+ & the address shows the country; a US state was typed as the country \\
+FY2019 worksite 88\% blank
+ & flagged, not imputed
+ & worksite and employer state agree in only 52\% of rows, and the blank rows differ (93\% vs 61\% certified), so imputing would invent locations \\
+high-cardinality text
+ & one-hot only 10 low-cardinality columns; SOC as top 50 + \code{Other} (87.7\% of rows); employer and job title not one-hot
+ & 132k employers and 375k job titles would add half a million near-empty columns; they enter as filing volume and seniority flags instead \\
+\bottomrule
+\end{tabularx}}
+
+%-----------------------------------------------------------------------
+\section{What changed after preparation}
+Exploration set, before and after cleaning (\code{report/cleaning\_log.md}).
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{3.0cm} L{1.9cm} Y@{}}
+\toprule
+\textbf{Measure} & \textbf{Before} & \textbf{After} \\
+\midrule
+Rows & 3{,}178{,}679 & 3{,}178{,}679 (none dropped) \\
+Attributes & 17 harmonised & 40 cleaned; 210 after encoding \\
+Usable prevailing wages & 2{,}645{,}476 & 2{,}623{,}796 (21{,}680 set missing: 21{,}579 outliers, 101 invalid) \\
+Wage range (annual) & \$0 -- \$1B & \$15{,}080 -- \$462{,}342 \\
+Pay units & 5, 427 mislabelled & 1 (annual) \\
+SOC title spellings & 1{,}769 & 1{,}123 \\
+Job title spellings & 439{,}495 & 375{,}194 \\
+Employer name spellings & 204{,}209 & 132{,}485 employers \\
+Blank employer country & 100{,}916 & 0 \\
+Exact duplicate rows & 777{,}688 & 777{,}688, kept and counted \\
+Missing cells (not by design) & 1.92\% & 1.56\% \\
+\bottomrule
+\end{tabularx}}
+
+Cleaning turned the wage into one comparable annual number: the lowest cleaned wage is exactly
+$\$7.25\times2{,}080$, the US federal minimum wage, a sign the unit fixes worked. Its log is almost
+symmetric (skew $-0.04$, against $1.14$ for dollars). Harmonising occupation and employer names
+is what makes the within-occupation and within-employer comparisons of Section~5 possible.
+
+%-----------------------------------------------------------------------
+\section{Basic questions and problem statement}
+
+\minihead{Basic questions}
+\begin{enumerate}[label=\arabic*.]
+  \item Which employers file the most? (Cognizant, Infosys, TCS, Google, Amazon; the top 10 file 15\%.)
+  \item Which jobs? (Mostly software: computer titles are 65\% of filings; Fig.~\ref{fig:soc}.)
+  \item How many filings are certified? (91\%; only 0.87\% are denied.)
+  \item Have wages risen? (Median prevailing wage $+33\%$ from FY2017 to FY2022.)
+  \item Do some regions pay more? (West \$105k vs Midwest \$78k.)
+\end{enumerate}
+
+\begin{figure*}[!t]
+  \figfile{\figdir fig04_soc.png}{5.2cm}
+  \caption{This is mostly a computer-jobs dataset: ``Software Developers, Applications'' alone is
+  30\% of filings, and within a title the 75th-percentile wage is 1.4$\times$ the 25th, so
+  occupation has to be held fixed before comparing anything.}
+  \label{fig:soc}
+\end{figure*}
+
+\begin{figure*}[!t]
+  \figfile{\figdir fig05_visa.png}{4.6cm}
+  \caption{Relative prevailing wage = log wage minus the median of the same SOC title $\times$
+  state $\times$ year. E-3 filings sit $+8.8\%$ above comparable jobs on average, H-1B $+1.6\%$
+  (left); the gap holds at every employer size above 10 filings a year (about $+13\%$ vs
+  $+1$ to $+3\%$, right).}
+  \label{fig:visa}
+\end{figure*}
+
+\begin{figure*}[!t]
+  \figfile{\figdir fig07_employer_volume.png}{4.6cm}
+  \caption{Denial rates peak at employers with 2--10 filings a year (3.2\%), against 0.23\% for the
+  largest filers (left). Half of E-3 filings come from employers with $\le$10 filings, against
+  18\% of H-1B, yet E-3 is denied more even within the same size group (right).}
+  \label{fig:volume}
+\end{figure*}
+
+\begin{figure}[!ht]
+  \figfile{\figdir fig09_seniority.png}{3.9cm}
+  \caption{Job-title keywords move the relative prevailing wage as expected (senior $+10\%$,
+  junior $-16\%$), so relative wage tracks the wage level an employer chose, a column this
+  extract doesn't have.}
+  \label{fig:senior}
+\end{figure}
+
+\minihead{Our problem statements}
+\noindent\fbox{\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}
+\textbf{P1 (primary).} For the same occupation, worksite state and fiscal year, do E-3
+(Australian) filings carry a different prevailing wage than H-1B filings, and does any
+difference remain within the same employer?
+
+\smallskip
+\textbf{P2.} Are E-3 filings denied more or less often than H-1B filings from employers of the
+same size in the same year, and within the same employer?
+\end{minipage}}
+
+\field{How they are novel:}{the basic questions summarise one variable at a time. The prevailing
+wage is set by DOL from occupation, area and wage level; the visa isn't an input, so ``no
+difference'' is a natural default for P1. A difference would mean employers place the two groups
+at different wage levels, which the data records only indirectly (Fig.~\ref{fig:senior}). P1 holds
+fixed what the basic questions show moves wages most (occupation, place, year) and then the
+employer. P2 asks whether a 5.8$\times$ raw denial gap survives the main confounder found in EDA,
+employer size (Fig.~\ref{fig:volume}), a possible Simpson's paradox.}
+
+%-----------------------------------------------------------------------
+\section{Statistical inferences}
+
+\field{Rows tested:}{the held-out confirmation set: 794{,}670 filings from 33{,}314 employers that
+never appear in the exploration set, cleaned with the saved rules. E-3 vs H-1B filings only
+(H-1B1 is 0.4\% and a separate program). Wage tests use FY2017--18 and FY2020--22 (FY2019 has no
+prevailing wage) and rows with a cleaned wage and known worksite.}
+
+\field{Common design, fixed before the data was opened:}{each test is the coefficient $\beta$ in
+\[ y_i=\beta\,\mathrm{E3}_i+\alpha_{c(i)}+\varepsilon_i, \]
+where $\alpha_c$ is a fixed effect for the comparison cell (e.g.\ SOC $\times$ state $\times$
+year). Fixed effects compare E-3 and H-1B filings only inside the same cell; they are removed by
+demeaning within cells. Standard errors are \textbf{clustered by employer} (CR1) with a $t$
+reference on $G-1$ df ($G$ = employers): one employer's filings are near-copies, so they are not
+independent. Four tests, two-sided, family-wise $\alpha=0.05$ with \textbf{Holm} correction. With
+this many rows almost anything is significant, so each result is also judged by whether its 95\%
+CI clears the smallest meaningful difference (MID): \emph{meaningful} (CI beyond the MID),
+\emph{detectable, possibly too small} (CI overlaps it), \emph{negligible} (inside it, confirmed
+by TOST) or \emph{inconclusive}. Power at the MID, from exploration-set SEs: T1 1.00, T2 0.999,
+T3 0.16, T4 0.93.}
+
+%------------------------------------------------------------ Test 1
+\subsection*{Test 1 (P1): do E-3 filings carry a different prevailing wage for the same job,
+state and year?}
+
+\tpart{a}{Hypotheses, written before running the test}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+$H_0$ & $\beta=0$ \\
+$H_1$ & $\beta\neq0$ \\
+Significance level & $\alpha=0.05$ family-wise (Holm, 4 tests) \\
+Side & two-sided \\
+Test & $t$-test on $\beta$, fixed effects for SOC $\times$ state $\times$ year, employer-clustered SE \\
+Smallest difference that matters & 5\% ($|\beta|\ge\log1.05=0.049$) \\
+\bottomrule
+\end{tabularx}}
+
+$y$ = log annual prevailing wage, so $\beta$ is the E-3 minus H-1B difference in log points
+($\approx$\%). Two-sided, because choosing a direction after EDA would be data snooping. 5\%,
+because it is about \$4{,}400 at the median wage, about one year of wage growth here, and half
+the gap between ``senior'' and other titles in the same job: a smaller gap wouldn't place a
+worker at a different wage level.
+
+\tpart{b}{Other tests we considered}
+Two groups and a continuous, symmetric response suggest a two-sample $t$-test, but the groups
+must be compared within the same occupation, state and year (Figs.~\ref{fig:soc}, \ref{fig:visa}),
+and filings aren't independent. A fixed-effects regression does both comparisons at once
+for 2{,}729 cells, and clustering by employer handles the dependence.
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.4cm} Y@{}}
+\toprule
+\textbf{Also considered} & \textbf{Why we did not use it} \\
+\midrule
+Welch $t$-test on relative wage & treats filings as independent; its SE (0.0027) is 2.4$\times$ too small. Run as a check: $t=20.7$, same decision \\
+Mann--Whitney U & tests a shift in ranks, which can't be compared with a 5\% MID; also assumes independence. Run as a check: $p<10^{-100}$ \\
+Mixed model, employer random effects & assumes employer effects are unrelated to visa class, the very thing Test 2 questions \\
+Raw two-group comparison & mixes job, state and year composition into the gap \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{c}{Result}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+Rows used & 408{,}671 (10{,}433 E-3), 19{,}299 employers \\
+Estimate & $+9.1\%$ ($\hat\beta=0.087$; raw gap $+9.6\%$) \\
+95\% confidence interval & $+7.7\%$ to $+10.5\%$ \\
+Test statistic (d.f.) & $t=13.66$ (19{,}298) \\
+p-value (Holm) & $3.0\times10^{-42}$ ($8.9\times10^{-42}$) \\
+Wild-cluster bootstrap p & $\le 0.0005$ (1{,}999 draws) \\
+Decision & reject $H_0$ \\
+Verdict & meaningful: the whole CI is above 5\% \\
+\bottomrule
+\end{tabularx}}
+
+For the same occupation, state and year, E-3 filings carry a prevailing wage about 9\% higher than
+H-1B filings, well past the 5\% that matters. Occupation, state and year explain almost none of
+the raw $+9.6\%$ gap. The estimate is stable across years ($+8$ to $+12\%$, Fig.~\ref{fig:year})
+and unchanged without the largest employer.
+
+\begin{figure*}[!t]
+  \figfile{\figdir fig13_inference_estimates.png}{4.3cm}
+
+  \figfile{\figdir fig14_inference_by_year.png}{4.3cm}
+  \caption{Top: all four estimates with 95\% CIs; the grey band is $\pm$MID. Tests 1--3 clear it;
+  Test 4 straddles it. Bottom: Tests 1 and 3 estimated year by year (exploratory, not
+  pre-registered). The wage gap is stable at $+8$ to $+12\%$; the denial gap shrinks after FY2020.}
+  \label{fig:year}
+\end{figure*}
+
+%------------------------------------------------------------ Test 2
+\needspace{18\baselineskip}
+\subsection*{Test 2 (P1): does the wage gap remain within the same employer?}
+
+\tpart{a}{Hypotheses, written before running the test}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+$H_0$ & $\beta=0$ \\
+$H_1$ & $\beta\neq0$ \\
+Significance level & $\alpha=0.05$ family-wise (Holm) \\
+Side & two-sided \\
+Test & as Test 1, cells = employer $\times$ SOC $\times$ state $\times$ year \\
+Smallest difference that matters & 5\% \\
+\bottomrule
+\end{tabularx}}
+
+Only employers that file both visas for the same job, state and year contribute. If the Test~1
+gap vanished here, it would only mean that higher-paying employers hire Australians; if it
+remains, the same employer files the two groups differently.
+
+\tpart{b}{Other tests we considered}
+Holding the employer fixed removes its pay policy, industry and lawyer, the confounders Test~1
+leaves open; fixed effects do this without assuming anything about how employers differ.
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.4cm} Y@{}}
+\toprule
+\textbf{Also considered} & \textbf{Why we did not use it} \\
+\midrule
+Paired $t$-test on cell means & weights a cell with 1 E-3 and 500 H-1B filings like a balanced one \\
+Matching E-3 to H-1B filings & discards most H-1B filings for no gain in bias \\
+Mixed model & random effects assume away the employer confounding being tested \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{c}{Result}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+Rows used & 71{,}060 (3{,}356 E-3), 695 employers, 1{,}906 cells \\
+Estimate & $+6.8\%$ ($\hat\beta=0.065$) \\
+95\% confidence interval & $+5.3\%$ to $+8.3\%$ \\
+Test statistic (d.f.) & $t=9.24$ (694) \\
+p-value (Holm) & $2.9\times10^{-19}$ ($5.8\times10^{-19}$) \\
+Wild-cluster bootstrap p & $\le 0.0005$ \\
+Decision & reject $H_0$ \\
+Verdict & meaningful: the whole CI is above 5\% \\
+\bottomrule
+\end{tabularx}}
+
+The same employer files its E-3 workers at a prevailing wage about 7\% higher than its H-1B
+workers in the same job, state and year. About 75\% of the Test~1 gap remains (comparing two
+populations, as Test~2 covers only employers filing both visas), so the premium is mostly
+\emph{how} employers file, not \emph{which} employers hire Australians.
+
+%------------------------------------------------------------ Test 3
+\needspace{18\baselineskip}
+\subsection*{Test 3 (P2): are E-3 filings denied more often by employers of the same size?}
+
+\tpart{a}{Hypotheses, written before running the test}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+$H_0$ & $\beta=0$ \\
+$H_1$ & $\beta\neq0$ \\
+Significance level & $\alpha=0.05$ family-wise (Holm) \\
+Side & two-sided \\
+Test & linear probability model, fixed effects for employer-size group $\times$ year, employer-clustered SE \\
+Smallest difference that matters & 0.5 percentage points \\
+\bottomrule
+\end{tabularx}}
+
+$y$ = 1 if denied. Size groups: 1, 2--10, 11--100, 101--1000, $>$1000 filings a year; all six
+years are used. 0.5\,pp, because the H-1B denial rate is 0.78\%, so it means a $\ge$1.6$\times$
+higher risk, and it is over half the whole FY2017--22 fall in the denial rate (1.36\% $\to$ 0.49\%).
+
+\tpart{b}{Other tests we considered}
+Employer size is the main confounder (Fig.~\ref{fig:volume}), so the comparison is within size
+group and year. A linear probability model gives the gap directly in percentage points, the unit of
+the MID, and its clustered SE needs no functional form.
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.4cm} Y@{}}
+\toprule
+\textbf{Also considered} & \textbf{Why we did not use it} \\
+\midrule
+Cochran--Mantel--Haenszel test & the classic stratified 2$\times$2 test, but assumes independent filings. Run as a check: pooled OR 3.82, $p<10^{-100}$ \\
+Logistic regression & gives an odds ratio, not pp. Run as a check, same fixed effects and clustering: OR 3.80, $z=24.9$ \\
+$\chi^2$ test on the raw 2$\times$2 table & ignores the size confounder the question is about \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{c}{Result}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+Rows used & 791{,}227 (14{,}587 E-3), 32{,}956 employers \\
+Estimate & $+3.79$\,pp (E-3 5.32\%, H-1B 0.77\% raw; raw gap $+4.55$\,pp) \\
+95\% confidence interval & $+3.26$ to $+4.31$\,pp \\
+Test statistic (d.f.) & $t=14.12$ (32{,}955) \\
+p-value (Holm) & $4.0\times10^{-45}$ ($1.6\times10^{-44}$) \\
+Wild-cluster bootstrap p & $\le 0.0005$ \\
+Decision & reject $H_0$ \\
+Verdict & meaningful: the whole CI is above 0.5\,pp \\
+\bottomrule
+\end{tabularx}}
+
+Among employers of the same size in the same year, E-3 filings are denied 3.8\,pp more often;
+employer size explains only 17\% of the raw gap. The power check expected only 0.16 power at the
+MID, but the effect turned out about eight times larger. \emph{Exploratory, not pre-registered:}
+the gap shrinks from $+6.6$\,pp in FY2018 to $+1.6$\,pp in FY2022 (Fig.~\ref{fig:year}).
+
+%------------------------------------------------------------ Test 4
+\needspace{18\baselineskip}
+\subsection*{Test 4 (P2): does the denial gap remain within the same employer?}
+
+\tpart{a}{Hypotheses, written before running the test}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+$H_0$ & $\beta=0$ \\
+$H_1$ & $\beta\neq0$ \\
+Significance level & $\alpha=0.05$ family-wise (Holm) \\
+Side & two-sided \\
+Test & as Test 3, cells = employer $\times$ year \\
+Smallest difference that matters & 0.5 percentage points \\
+\bottomrule
+\end{tabularx}}
+
+Only employers filing both visas in the same year contribute. Holding the employer fixed removes
+its experience with the process and its form-filling practice, which size groups only approximate.
+
+\tpart{b}{Other tests we considered}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{2.4cm} Y@{}}
+\toprule
+\textbf{Also considered} & \textbf{Why we did not use it} \\
+\midrule
+Conditional (fixed-effects) logit & planned as a check, but the exact likelihood failed on employer-years with thousands of filings. With one binary regressor its score test equals the CMH test by employer $\times$ year, which we ran instead: OR 1.89, $p=7.6\times10^{-6}$ \\
+Logit with employer dummies & 1{,}547 employers' dummies give biased estimates when most employer-years have no denial (incidental-parameter problem) \\
+\bottomrule
+\end{tabularx}}
+
+\tpart{c}{Result}
+{\small
+\begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
+\toprule
+Rows used & 382{,}911 (8{,}003 E-3), 1{,}547 employers \\
+Estimate & $+0.51$\,pp (H-1B rate at these employers 0.30\%) \\
+95\% confidence interval & $+0.22$ to $+0.81$\,pp \\
+Test statistic (d.f.) & $t=3.44$ (1{,}546) \\
+p-value (Holm) & $5.9\times10^{-4}$ ($5.9\times10^{-4}$) \\
+Wild-cluster bootstrap p & $\le 0.0005$ \\
+Decision & reject $H_0$ \\
+Verdict & detectable, possibly too small: the CI straddles 0.5\,pp (TOST $p=0.54$) \\
+\bottomrule
+\end{tabularx}}
+
+Within the same employer the gap is real but small in absolute terms; we can't tell whether it
+reaches the 0.5\,pp that matters. Relative to these employers' low H-1B rate (0.30\%) it is about
+2.7$\times$. Across the two populations, 86\% of the Test~3 gap disappears when the employer is
+held fixed: most of the E-3 denial gap is \emph{between} employers.
+
+
+%-----------------------------------------------------------------------
+\section{Limitations}
+\begin{itemize}
+  \item \textbf{Association, not cause.} Australians may simply be hired into more senior roles;
+  worker experience and education aren't in the data. We show that filings differ, not that the
+  visa causes it.
+  \item \textbf{Prevailing wage, not wage paid.} It is the legal minimum, and the wage-level
+  column was cut from this extract; relative wage is an indirect proxy (Fig.~\ref{fig:senior}).
+  State is coarser than the metro area DOL actually uses.
+  \item \textbf{FY2019 left out of the wage tests}, since its file has no prevailing wage, and
+  most of its worksites are blank.
+  \item \textbf{Duplicates kept.} If some identical rows are export errors, big employers are
+  over-weighted; clustering keeps the SEs honest, but we didn't re-run the tests on de-duplicated
+  data.
+  \item \textbf{Tests 2 and 4 cover only employers filing both visas}, which are larger than average.
+  \item \textbf{Denial here is DOL's check of the form}, not the visa decision, which USCIS makes later.
+  \item \textbf{Exploratory extras.} The year-by-year results were not pre-registered and are not
+  Holm-corrected.
+\end{itemize}
+
+\end{document}

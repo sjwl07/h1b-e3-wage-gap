@@ -1,0 +1,62 @@
+{
+  "per_year": {
+    "2017": {
+      "rows": 624650,
+      "case_status_unmapped": 0,
+      "worksite_without_comma": 0,
+      "employer_location_without_comma": 0
+    },
+    "2018": {
+      "rows": 654360,
+      "case_status_unmapped": 0,
+      "worksite_without_comma": 0,
+      "employer_location_without_comma": 0
+    },
+    "2019": {
+      "rows": 664616,
+      "case_status_unmapped": 0,
+      "worksite_without_comma": 0,
+      "employer_location_without_comma": 0
+    },
+    "2020": {
+      "rows": 577334,
+      "case_status_unmapped": 0,
+      "worksite_without_comma": 0,
+      "employer_location_without_comma": 0
+    },
+    "2021": {
+      "rows": 826305,
+      "case_status_unmapped": 0,
+      "worksite_without_comma": 0,
+      "employer_location_without_comma": 0
+    },
+    "2022": {
+      "rows": 626084,
+      "case_status_unmapped": 0,
+      "worksite_without_comma": 0,
+      "employer_location_without_comma": 0
+    }
+  },
+  "total_rows": 3973349,
+  "columns": [
+    "fiscal_year",
+    "quarter",
+    "visa_class",
+    "case_status",
+    "employer_name",
+    "employer_key",
+    "employer_city",
+    "employer_state",
+    "employer_country",
+    "soc_title",
+    "job_title",
+    "full_time",
+    "worksite_city",
+    "worksite_state",
+    "prevailing_wage",
+    "wage_offered_fy2019",
+    "unit_of_pay"
+  ],
+  "unique_employer_name": 255125,
+  "unique_employer_key": 165799
+}
