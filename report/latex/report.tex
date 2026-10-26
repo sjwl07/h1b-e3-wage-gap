@@ -246,7 +246,7 @@ Exploration set, before and after cleaning (\code{report/cleaning\_log.md}).
 \textbf{Measure} & \textbf{Before} & \textbf{After} \\
 \midrule
 Rows & 3{,}178{,}679 & 3{,}178{,}679 (none dropped) \\
-Attributes & 17 harmonised & 40 cleaned; 210 after encoding \\
+Attributes & 17 harmonised (12 raw; location split into city, state; year, employer key, FY2019 wage added) & 40 cleaned; 210 after encoding \\
 Usable prevailing wages & 2{,}645{,}476 & 2{,}623{,}796 (21{,}680 set missing: 21{,}579 outliers, 101 invalid) \\
 Wage range (annual) & \$0 -- \$1B & \$15{,}080 -- \$462{,}342 \\
 Pay units & 5, 427 mislabelled & 1 (annual) \\
@@ -393,7 +393,7 @@ Smallest difference that matters & 5\% ($|\beta|\ge\log1.05=0.049$) \\
 \end{tabularx}}
 
 $y$ = log annual prevailing wage, so $\beta$ is the E-3 minus H-1B difference in log points
-($\approx$\%). Two-sided, because choosing a direction after EDA would be fitting the test to the data. 5\%,
+($\approx$\%). Two-sided, because P1 and P2 ask whether the groups differ in either direction. 5\%,
 because it is about \$4{,}400 at the median wage, about one year of wage growth here, and half
 the gap between ``senior'' and other titles in the same job: a smaller gap wouldn't place a
 worker at a different wage level.
@@ -422,7 +422,7 @@ Rows used & 408{,}671 (10{,}433 E-3), 19{,}299 employers \\
 Estimate & $+9.1\%$ ($\hat\beta=0.087$; raw gap $+9.6\%$) \\
 95\% confidence interval & $+7.7\%$ to $+10.5\%$ \\
 Test statistic (d.f.) & $t=13.66$ (19{,}298) \\
-p-value (Holm) & $3.0\times10^{-42}$ ($8.9\times10^{-42}$) \\
+p-value (raw, Holm-adjusted) & $3.0\times10^{-42}$ ($8.9\times10^{-42}$) \\
 Decision & reject $H_0$ \\
 Verdict & meaningful: the whole CI is above 5\% \\
 \bottomrule
@@ -484,7 +484,7 @@ Rows used & 71{,}060 (3{,}356 E-3), 695 employers, 1{,}906 cells \\
 Estimate & $+6.8\%$ ($\hat\beta=0.065$) \\
 95\% confidence interval & $+5.3\%$ to $+8.3\%$ \\
 Test statistic (d.f.) & $t=9.24$ (694) \\
-p-value (Holm) & $2.9\times10^{-19}$ ($5.8\times10^{-19}$) \\
+p-value (raw, Holm-adjusted) & $2.9\times10^{-19}$ ($5.8\times10^{-19}$) \\
 Decision & reject $H_0$ \\
 Verdict & meaningful: the whole CI is above 5\% \\
 \bottomrule
@@ -539,7 +539,7 @@ Rows used & 791{,}227 (14{,}587 E-3), 32{,}956 employers \\
 Estimate & $+3.79$\,pp (E-3 5.32\%, H-1B 0.77\% raw; raw gap $+4.55$\,pp) \\
 95\% confidence interval & $+3.26$ to $+4.31$\,pp \\
 Test statistic (d.f.) & $t=14.12$ (32{,}955) \\
-p-value (Holm) & $4.0\times10^{-45}$ ($1.6\times10^{-44}$) \\
+p-value (raw, Holm-adjusted) & $4.0\times10^{-45}$ ($1.6\times10^{-44}$) \\
 Decision & reject $H_0$ \\
 Verdict & meaningful: the whole CI is above 0.5\,pp \\
 \bottomrule
@@ -594,7 +594,7 @@ Rows used & 382{,}911 (8{,}003 E-3), 1{,}547 employers \\
 Estimate & $+0.51$\,pp (H-1B rate at these employers 0.30\%) \\
 95\% confidence interval & $+0.22$ to $+0.81$\,pp \\
 Test statistic (d.f.) & $t=3.44$ (1{,}546) \\
-p-value (Holm) & $5.9\times10^{-4}$ ($5.9\times10^{-4}$) \\
+p-value (raw, Holm-adjusted) & $5.9\times10^{-4}$ ($5.9\times10^{-4}$) \\
 Decision & reject $H_0$ \\
 Verdict & possibly too small: the CI includes 0.5\,pp \\
 \bottomrule
@@ -602,7 +602,8 @@ Verdict & possibly too small: the CI includes 0.5\,pp \\
 
 Within the same employer the gap is real but small in absolute terms; we can't tell whether it
 reaches the 0.5\,pp that matters. Relative to these employers' low H-1B rate (0.30\%) it is about
-2.7$\times$. Holding the employer fixed removes 86\% of the Test~3 gap, so most of the E-3 denial
+2.7$\times$. Holding the employer fixed removes 86\% of the Test~3 gap (different sets of employers, as in
+Test~2), so most of the E-3 denial
 gap comes from \emph{which} employers file E-3, not from how one employer's filings fare.
 
 %------------------------------------------------------------ comparison
