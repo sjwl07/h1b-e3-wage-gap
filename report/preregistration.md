@@ -7,7 +7,7 @@ Fixed on 2026-10-21, **before** the confirmation set was cleaned or opened. The 
 | Item | Choice | Reason |
 |---|---|---|
 | Groups | E-3 Australian vs H-1B (variable `e3` = 1 for E-3) | H-1B1 (Chile/Singapore) is 0.4% of filings and a separate program. |
-| Model | `y = β·e3 + cell fixed effect + error`, OLS; fixed effects removed by demeaning within cell | Fixed effects compare E-3 and H-1B filings **only within the same cell**, so differences between cells (occupation, state, year, employer) can't create a gap. β is the average of the within-cell gaps μ_E3 − μ_H1B (or p_E3 − p_H1B for denials), so β = 0 is the usual two-group null μ_E3 = μ_H1B, applied to like filings. |
+| Model | `y = β·e3 + cell fixed effect + error`, OLS; fixed effects removed by demeaning within cell | Fixed effects compare E-3 and H-1B filings **only within the same cell**, so differences between cells (occupation, state, year, employer) can't create a gap. |
 | Standard errors | **Clustered by employer** (`employer_key`), CR1, t reference with G − 1 df | One employer's filings are near-copies (Fig. 12: 55% of rows at the largest filers have an identical twin), so they aren't independent. Clustering by employer is required, not optional; the split was grouped by employer for the same reason. |
 | Significance | Family-wise α = 0.05, **Holm–Bonferroni** across the 4 tests | 4 tests on two related statements. Holm controls the family-wise error rate and is uniformly more powerful than Bonferroni. |
 | Sidedness | **Two-sided** for all tests | EDA suggested directions (E-3 higher wage, more denials), but choosing one-sided tests after looking at the data is data snooping, and a reversal would be a finding in itself. |
@@ -34,8 +34,8 @@ With ~800k filings, almost any difference will be statistically significant; the
 
 - **Population:** E-3 and H-1B filings in FY2017–18 and FY2020–22 (FY2019 has no prevailing wage) with a cleaned wage and a known worksite.
 - **Outcome:** log annual prevailing wage. **Cells:** SOC title × worksite state × fiscal year.
-- **H₀:** μ_E3 = μ_H1B: within the same SOC × state × year, mean log PW is equal for E-3 and H-1B filings (β = 0)
-- **H₁:** μ_E3 ≠ μ_H1B (β ≠ 0; two-sided)
+- **H₀:** β = 0 (within the same SOC × state × year, mean log PW is equal for E-3 and H-1B filings)
+- **H₁:** β ≠ 0 (two-sided)
 - **Test:** Wald **t-test on β** in the fixed-effects model, employer-clustered SE, df = G − 1.
 - **Why it fits:** the comparison has to hold occupation, place and year fixed (Figs. 2–4), and fixed effects do that for ~7,000 cells (with both visa types) without assuming anything about how cells differ. Log PW is symmetric (skew −0.04), and with thousands of clusters the clustered t is reliable.
 - **Other tests considered:**
@@ -48,8 +48,8 @@ With ~800k filings, almost any difference will be statistically significant; the
 ## T2. The same comparison within the same employer (P1)
 
 - **Cells:** employer × SOC title × worksite state × fiscal year. Only employers that file both E-3 and H-1B for the same job, state and year contribute (in exploration: 2,828 employers and ~18k E-3 filings).
-- **H₀:** μ_E3 = μ_H1B: within the same employer, SOC, state and year, mean log PW is equal for E-3 and H-1B filings (β = 0)
-- **H₁:** μ_E3 ≠ μ_H1B (β ≠ 0; two-sided)
+- **H₀:** β = 0 (the same employer files the same prevailing wage for E-3 and H-1B workers in the same job, state and year)
+- **H₁:** β ≠ 0 (two-sided)
 - **Test:** as T1, with the finer cells.
 - **Why it fits:** it removes everything about the employer (pay policy, industry, lawyer), so any gap left reflects how one employer files for the two groups. It's the H-1B counterpart of comparing homes within the same neighbourhood.
 - **Estimand caveat:** it describes employers that hire both groups for the same job, which are larger than average; it isn't the average E-3 filing.
@@ -61,8 +61,8 @@ With ~800k filings, almost any difference will be statistically significant; the
 
 - **Population:** all E-3 and H-1B filings, FY2017–22 (case status is known for every year).
 - **Outcome:** `denied` (1 = DENIED, else 0). **Cells:** employer-size group (filings per year: 1, 2–10, 11–100, 101–1000, > 1000) × fiscal year.
-- **H₀:** p_E3 = p_H1B: within the same size group and year, the denial probability is equal for E-3 and H-1B (β = 0)
-- **H₁:** p_E3 ≠ p_H1B (β ≠ 0; two-sided)
+- **H₀:** β = 0 (within the same size group and year, the denial probability is equal for E-3 and H-1B)
+- **H₁:** β ≠ 0 (two-sided)
 - **Test:** **linear probability model** with fixed effects, employer-clustered SE.
 - **Why it fits:** EDA shows employer size is the main confounder (Fig. 7). The linear probability model gives the difference directly in percentage points, which is how the MID is stated; with a binary outcome, the clustered SE is valid without assuming a functional form.
 - **Other tests considered:**
@@ -73,8 +73,8 @@ With ~800k filings, almost any difference will be statistically significant; the
 ## T4. E-3 vs H-1B denial rate, same employer × year (P2)
 
 - **Cells:** employer × fiscal year. Only employers filing both visa types in the same year contribute (exploration: 6,309 employers).
-- **H₀:** p_E3 = p_H1B: within the same employer and year, the denial probability is equal for E-3 and H-1B (β = 0)
-- **H₁:** p_E3 ≠ p_H1B (β ≠ 0; two-sided)
+- **H₀:** β = 0 (within the same employer and year, the denial probability is equal for E-3 and H-1B)
+- **H₁:** β ≠ 0 (two-sided)
 - **Test:** as T3, with the finer cells.
 - **Why it fits:** it holds fixed everything about the employer (experience, lawyer, form-filling practice), which T3's size groups only approximate.
 - **Estimand caveat:** employers that file both visas in one year are mostly mid-sized and large, where denials are rare, so this answers the question for those employers.
