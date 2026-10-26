@@ -9,7 +9,6 @@ prevailing wage by occupation, area and wage level, so once occupation, state
 and year are fixed, what's left mostly reflects the wage level (I-IV) the
 employer chose, which this Kaggle extract doesn't contain directly.
 """
-import json
 from itertools import combinations
 
 import matplotlib
@@ -436,7 +435,6 @@ def main():
         f(df)
         print("done", f.__name__)
     REPORT.mkdir(parents=True, exist_ok=True)
-    (REPORT / "eda_stats.json").write_text(json.dumps(STATS, indent=1, default=str))
     write_report()
     print(f"Wrote {len(list(FIGURES.glob('fig*.png')))} figures to {FIGURES} and {REPORT / 'eda.md'}")
 
