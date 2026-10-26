@@ -128,13 +128,14 @@ def main():
     out = {}
     for c in cols:
         parts = [f[c] for f in frames]
-        if c in TEXT_COLS + ["employer_key"]:  # all-NaN columns (quarter) get float categories
-            parts = [x.cat.set_categories(x.cat.categories.astype("str")) for x in parts]
-        out[c] = (union_categoricals(parts, ignore_order=True) if c in TEXT_COLS + ["employer_key"]
-                  else pd.concat(parts, ignore_index=True))
+        if c in TEXT_COLS + ["employer_key"]:
+            # all-NaN columns (quarter in FY2017-19) get float categories, so cast them to str first
+            out[c] = union_categoricals([x.cat.set_categories(x.cat.categories.astype("str")) for x in parts],
+                                        ignore_order=True)
+        else:
+            out[c] = pd.concat(parts, ignore_index=True).to_numpy()
     del frames
-    df = pd.DataFrame({c: (pd.Categorical(v) if hasattr(v, "categories") else v.to_numpy())
-                       for c, v in out.items()})
+    df = pd.DataFrame(out)
 
     total = sum(v["rows"] for v in log.values())
     assert len(df) == total, (len(df), total)

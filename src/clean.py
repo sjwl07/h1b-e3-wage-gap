@@ -4,10 +4,9 @@ Every rule is fit on the exploration set only. The fitted parameters (SOC title
 mapping, IQR bounds) are saved so the *same* rules can later be applied to the
 confirmation set without re-fitting on it.
 
-Unlike the NYC data there is no single target here: case_status is known for
-every row, and the prevailing wage is only one of the outcomes. So a bad wage
-is set to NaN and flagged instead of dropping the whole row, which would also
-throw away a valid case decision.
+No rows are dropped: case_status is known for every row and the prevailing
+wage is only one of the outcomes, so a bad wage is set to NaN and flagged
+instead of throwing away a valid case decision with it.
 """
 import difflib
 import json
@@ -212,7 +211,7 @@ def clean(df, params=None):
     us_state = st.isin(REGION)
     ctry = df["employer_country"].astype("str")
     fix = us_state & (df["employer_country"].isna() | ctry.str.lower().isin(REGION))
-    df["employer_country"] = df["employer_country"].astype("str").where(~fix, USA).astype("category")
+    df["employer_country"] = ctry.where(~fix, USA).astype("category")
     log.add("3. fill / fix employer_country", df,
             "blank country (15.6% of FY2017 rows) or a US state given as the country ('Georgia') with a US "
             "employer state -> United States Of America", cells_changed=fix.sum())
@@ -351,7 +350,6 @@ def main():
     )
 
     REPORT.mkdir(parents=True, exist_ok=True)
-    log.to_csv(REPORT / "cleaning_log.csv", index=False)
     (REPORT / "cleaning_log.md").write_text(
         "# Cleaning log (exploration set)\n\n" + log.to_markdown(index=False) + "\n" + summary)
     with pd.option_context("display.width", 220, "display.max_colwidth", 60):

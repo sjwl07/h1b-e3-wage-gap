@@ -22,11 +22,8 @@ import seaborn as sns
 from scipy.stats import chi2_contingency
 
 from config import DATA_PROCESSED, EXPLORE_PATH, FIGURES, REPORT
+from tests_spec import MIN_CELL, relative_pw, volume_bin
 
-CELL = ["soc_harmonized", "worksite_state", "fiscal_year"]
-MIN_CELL = 5  # relative wage only where the comparison cell has >= 5 wages
-VOLUME_BINS = [0, 1, 10, 100, 1000, np.inf]
-VOLUME_LABELS = ["1", "2-10", "11-100", "101-1000", ">1000"]
 STATUSES = ["CERTIFIED", "CERTIFIED-WITHDRAWN", "WITHDRAWN", "DENIED"]
 VISAS = ["H-1B", "E-3 Australian", "H-1B1 Chile", "H-1B1 Singapore"]
 SAMPLE_N = 300_000  # Cramér's V on a random sample; chi² on 3M rows is slow and V is already stable
@@ -56,19 +53,11 @@ def pct(x, d=1):
 
 def load():
     df = pd.read_parquet(DATA_PROCESSED / "explore_clean.parquet", columns=COLS)
-    g = df.groupby(CELL, observed=True)["log_pw"]
-    n_cell = g.transform("count")
-    df["rel_pw"] = (df["log_pw"] - g.transform("median")).where(n_cell >= MIN_CELL)
-    df["volume_bin"] = pd.cut(df["employer_volume"].astype(float), VOLUME_BINS, labels=VOLUME_LABELS)
+    df["rel_pw"] = relative_pw(df)
+    df["volume_bin"] = volume_bin(df)
     df["visa_class"] = pd.Categorical(df["visa_class"].astype(str), VISAS)
     df["case_status"] = pd.Categorical(df["case_status"].astype(str), STATUSES)
     return df
-
-
-def rates(df, by):
-    t = df.groupby(by, observed=True)[["denied", "withdrawn", "certified_withdrawn"]].mean()
-    t["n"] = df.groupby(by, observed=True).size()
-    return t
 
 
 def fig_wage_distribution(df):
@@ -90,12 +79,12 @@ def fig_year(df):
     n = by.size()
     med = by["annual_pw"].median()
     off = by["annual_offered_fy2019"].median()
-    top5 = df["soc_harmonized"].value_counts().head(3).index
+    top3 = df["soc_harmonized"].value_counts().head(3).index
     fig, ax = plt.subplots(1, 2, figsize=(12, 4))
     ax[0].bar(n.index, n.values / 1e3, color="tab:blue")
     ax[0].set(xlabel="Fiscal year", ylabel="Filings (thousands)", title="Filings per year")
     ax[1].plot(med.index, med.values / 1e3, "o-", label="all occupations (prevailing)")
-    for s in top5:
+    for s in top3:
         m = df[df["soc_harmonized"] == s].groupby("fiscal_year")["annual_pw"].median()
         ax[1].plot(m.index, m.values / 1e3, "o--", alpha=0.7, label=s[:32])
     ax[1].plot([2019], [off[2019] / 1e3], "s", mfc="none", ms=10, color="k", label="FY2019 offered wage")
@@ -195,7 +184,8 @@ def fig_status(df):
 
 
 def fig_employer_volume(df):
-    r = rates(df, "volume_bin")
+    r = df.groupby("volume_bin", observed=True)[["denied", "withdrawn", "certified_withdrawn"]].mean()
+    r["n"] = df.groupby("volume_bin", observed=True).size()
     ey = df.groupby(["employer_key", "fiscal_year"], observed=True)["denied"].agg(["sum", "size"])
     small = ey[ey["size"].between(2, 10)]
     with_denial = small[small["sum"] > 0]

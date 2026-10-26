@@ -20,11 +20,10 @@ from statsmodels.stats.multitest import multipletests
 from clean import clean
 from config import CONFIRM_PATH, DATA_PROCESSED, FIGURES, REPORT, SEED
 from fe import fe_ols, informative, public
-from tests_spec import ALPHA_FAMILY, TESTS, WAGE_YEARS, prepare
+from tests_spec import ALPHA_FAMILY, TESTS, prepare, relative_pw
 
 N_BOOT = 1999
 BOOT_BATCH = 100
-REL_CELL = ["soc_harmonized", "worksite_state", "fiscal_year"]
 
 
 # ---------- inference helpers ----------
@@ -72,36 +71,37 @@ def wild_cluster_p(r, n_boot=N_BOOT, seed=SEED):
     return float((1 + (np.abs(t_star) >= abs(r["t"])).sum()) / (n_boot + 1))
 
 
+def to_pct(x, unit):
+    """log points -> % difference; proportions -> percentage points."""
+    return 100 * np.expm1(x) if unit == "log" else 100 * x
+
+
 def fmt_effect(x, unit):
-    return f"{100 * np.expm1(x):+.2f}%" if unit == "log" else f"{100 * x:+.3f} pp"
+    return f"{to_pct(x, unit):+.2f}%" if unit == "log" else f"{to_pct(x, unit):+.3f} pp"
 
 
 # ---------- robustness checks ----------
 
-def wage_checks(pop, name, t):
-    out = {}
-    if name == "T2":  # same population as T1; the naive two-sample checks would just repeat T1's
-        top = pop["employer_key"].value_counts().index[0]
-        r = fe_ols(pop[pop["employer_key"] != top], t["y"], "e3", t["cells"], "employer_key")
-        out[f"without largest employer ({top})"] = {"beta": r["beta"], "se": r["se"], "p": r["p"]}
-        return out
-    # naive tests on the median-based relative PW used in EDA (treat filings as independent)
-    g = pop.groupby(REL_CELL, observed=True)["log_pw"]
-    rel = (pop["log_pw"] - g.transform("median")).where(g.transform("count") >= 5)
+def naive_checks(pop, t):
+    """Two-sample tests on the median-based relative PW used in EDA (treat filings as independent)."""
+    rel = relative_pw(pop)
     a, b = rel[pop["e3"] == 1].dropna(), rel[pop["e3"] == 0].dropna()
     w = stats.ttest_ind(a, b, equal_var=False)
     mw = stats.mannwhitneyu(a, b, alternative="two-sided")
-    out["naive Welch t on relative PW (ignores clustering)"] = {
-        "diff": float(a.mean() - b.mean()), "t": float(w.statistic), "p": float(w.pvalue),
-        "naive SE": float(np.sqrt(a.var() / len(a) + b.var() / len(b)))}
-    out["naive Mann-Whitney U on relative PW"] = {
-        "median E-3": float(a.median()), "median H-1B": float(b.median()), "U": float(mw.statistic),
-        "p": float(mw.pvalue)}
-    # leave out the largest employer of the test population
+    return {
+        "naive Welch t on relative PW (ignores clustering)": {
+            "diff": float(a.mean() - b.mean()), "t": float(w.statistic), "p": float(w.pvalue),
+            "naive SE": float(np.sqrt(a.var() / len(a) + b.var() / len(b)))},
+        "naive Mann-Whitney U on relative PW": {
+            "median E-3": float(a.median()), "median H-1B": float(b.median()), "U": float(mw.statistic),
+            "p": float(mw.pvalue)},
+    }
+
+
+def without_largest(pop, t):
     top = pop["employer_key"].value_counts().index[0]
     r = fe_ols(pop[pop["employer_key"] != top], t["y"], "e3", t["cells"], "employer_key")
-    out[f"without largest employer ({top})"] = {"beta": r["beta"], "se": r["se"], "p": r["p"]}
-    return out
+    return {f"without largest employer ({top})": {"beta": r["beta"], "se": r["se"], "p": r["p"]}}
 
 
 def by_year(pop, t):
@@ -127,34 +127,35 @@ def cmh(pop, cells):
             "p": float(res.pvalue), "informative strata": len(tables)}
 
 
-def denial_checks(pop, name, t):
-    out = {}
-    if name == "T3":
-        st = cmh(pop, t["cells"])
-        out["Cochran-Mantel-Haenszel by size x year (ignores clustering)"] = st
-        # logistic regression with the same cell fixed effects, employer-clustered;
-        # fit on rows aggregated to employer x cell x visa (binomial counts) to keep it small
-        agg = (pop.groupby(["employer_key"] + t["cells"] + ["e3"], observed=True)["denied"]
-               .agg(["sum", "size"]).reset_index())
-        cell = agg[t["cells"]].astype(str).agg("|".join, axis=1)
-        X = pd.get_dummies(cell, drop_first=True, dtype=float)
-        X.insert(0, "e3", agg["e3"].astype(float))
-        X = sm.add_constant(X)
-        endog = np.column_stack([agg["sum"], agg["size"] - agg["sum"]])
-        fit = sm.GLM(endog, X, family=sm.families.Binomial()).fit(
-            cov_type="cluster", cov_kwds={"groups": agg["employer_key"].astype("category").cat.codes})
-        out["logit with size x year FE, employer-clustered"] = {
-            "OR": float(np.exp(fit.params["e3"])), "z": float(fit.tvalues["e3"]), "p": float(fit.pvalues["e3"])}
-    else:
-        # With one binary regressor, the CMH test stratified by employer x year is the score test of the
-        # conditional (fixed-effects) logit; statsmodels' exact conditional logit recurses once per row and
-        # fails on employer-years with thousands of filings.
-        d = pop[informative(pop, "e3", t["cells"])]
-        out["CMH by employer x year (= conditional-logit score test; ignores clustering)"] = cmh(d, t["cells"])
-    top = pop["employer_key"].value_counts().index[0]
-    r = fe_ols(pop[pop["employer_key"] != top], t["y"], "e3", t["cells"], "employer_key")
-    out[f"without largest employer ({top})"] = {"beta": r["beta"], "se": r["se"], "p": r["p"]}
+def size_checks(pop, t):
+    """T3: CMH and a logit with the same size x year fixed effects."""
+    out = {"Cochran-Mantel-Haenszel by size x year (ignores clustering)": cmh(pop, t["cells"])}
+    # logistic regression with the same cell fixed effects, employer-clustered;
+    # fit on rows aggregated to employer x cell x visa (binomial counts) to keep it small
+    agg = (pop.groupby(["employer_key"] + t["cells"] + ["e3"], observed=True)["denied"]
+           .agg(["sum", "size"]).reset_index())
+    cell = agg[t["cells"]].astype(str).agg("|".join, axis=1)
+    X = pd.get_dummies(cell, drop_first=True, dtype=float)
+    X.insert(0, "e3", agg["e3"].astype(float))
+    X = sm.add_constant(X)
+    endog = np.column_stack([agg["sum"], agg["size"] - agg["sum"]])
+    fit = sm.GLM(endog, X, family=sm.families.Binomial()).fit(
+        cov_type="cluster", cov_kwds={"groups": agg["employer_key"].astype("category").cat.codes})
+    out["logit with size x year FE, employer-clustered"] = {
+        "OR": float(np.exp(fit.params["e3"])), "z": float(fit.tvalues["e3"]), "p": float(fit.pvalues["e3"])}
     return out
+
+
+def employer_checks(pop, t):
+    """T4: with one binary regressor, the CMH test stratified by employer x year is the score test of the
+    conditional (fixed-effects) logit; statsmodels' exact conditional logit recurses once per row and
+    fails on employer-years with thousands of filings."""
+    d = pop[informative(pop, "e3", t["cells"])]
+    return {"CMH by employer x year (= conditional-logit score test; ignores clustering)": cmh(d, t["cells"])}
+
+
+# T2 shares T1's population, so the naive two-sample checks would only repeat T1's
+EXTRA_CHECKS = {"T1": naive_checks, "T3": size_checks, "T4": employer_checks}
 
 
 # ---------- figures ----------
@@ -165,7 +166,7 @@ def figures(results, years):
     for axis, names, unit, xl in [(ax[0], ["T1", "T2"], "log", "E-3 minus H-1B prevailing wage (%)"),
                                   (ax[1], ["T3", "T4"], "pp", "E-3 minus H-1B denial rate (pp)")]:
         mid = results[names[0]]["mid"]
-        f = (lambda v: 100 * np.expm1(v)) if unit == "log" else (lambda v: 100 * v)
+        f = lambda v, u=unit: to_pct(v, u)
         axis.axvspan(f(-mid), f(mid), color="0.9", label="within ±MID")
         axis.axvline(0, color="k", lw=0.8)
         for i, n in enumerate(names):
@@ -186,7 +187,7 @@ def figures(results, years):
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 3.8))
     for axis, n, unit in [(ax[0], "T1", "log"), (ax[1], "T3", "pp")]:
-        f = (lambda v: 100 * np.expm1(v)) if unit == "log" else (lambda v: 100 * v)
+        f = lambda v, u=unit: to_pct(v, u)
         yy = sorted(years[n])
         b = [f(years[n][y]["beta"]) for y in yy]
         lo = [f(years[n][y]["lo"]) for y in yy]
@@ -228,7 +229,8 @@ def main():
                          "mean_y_h1b": float(pop.loc[pop["e3"] == 0, t["y"]].mean()),
                          "mean_y_e3": float(pop.loc[pop["e3"] == 1, t["y"]].mean()),
                          "mean_y_h1b_used": float(used.loc[used["e3"] == 0, t["y"]].mean())}
-        checks[name] = (wage_checks if t["unit"] == "log" else denial_checks)(pop, name, t)
+        extra = EXTRA_CHECKS.get(name)
+        checks[name] = {**(extra(pop, t) if extra else {}), **without_largest(pop, t)}
         if name in ("T1", "T3"):
             years[name] = by_year(pop, t)
         print(name, {k: v for k, v in results[name].items() if k in ("beta", "se", "t", "df", "p", "wild_p")})
@@ -251,7 +253,7 @@ def main():
 
 def interpretation(results, checks, years):
     r1, r2, r3, r4 = (results[n] for n in ["T1", "T2", "T3", "T4"])
-    pc = lambda v: 100 * np.expm1(v)
+    pc = lambda v: to_pct(v, "log")
     naive = checks["T1"]["naive Welch t on relative PW (ignores clustering)"]
     y1 = [pc(v["beta"]) for v in years["T1"].values()]
     y3 = years["T3"]

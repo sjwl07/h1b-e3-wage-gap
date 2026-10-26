@@ -72,7 +72,6 @@ def main():
     dd = pd.DataFrame(rows)
 
     REPORT.mkdir(parents=True, exist_ok=True)
-    dd.to_csv(REPORT / "data_dictionary.csv", index=False)
     md = (
         f"# Data dictionary\n\nComputed on the exploration set ({n:,} rows). "
         "'Sentinel zero' = a wage of 0, which can't be a real prevailing wage. "
