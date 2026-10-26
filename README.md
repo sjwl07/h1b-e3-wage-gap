@@ -11,7 +11,7 @@ The data isn't in this repo (it's 680 MB, and the license asks for it to come fr
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt    # exact versions: requirements.lock.txt
+.venv/bin/pip install -r requirements.lock.txt    # exact versions used (Python 3.12.3)
 ```
 
 ## Pipeline
