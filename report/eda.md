@@ -4,7 +4,7 @@
 
 ![fig01_wage_distribution](../figures/fig01_wage_distribution.png)
 
-**The prevailing wage is moderately right-skewed; log wage is almost exactly symmetric.** Annual PW has skew 1.14 (median $88k, mean $92k); log PW has skew -0.04. After cleaning, the range is $15k (exactly $7.25 × 2,080 h, the federal minimum wage) to $462k (physicians). Means, t-tests and linear models on log PW are reasonable.
+**Cleaning removes the impossible tails, and log wage is almost exactly symmetric.** Before cleaning, wage × stated unit runs from $25.58 to $1,000,000,000 a year (unit errors and outliers, left). After cleaning, annual PW has skew 1.14 (median $88k, mean $92k); log PW has skew -0.04. After cleaning, the range is $15k (exactly $7.25 × 2,080 h, the federal minimum wage) to $462k (physicians). Means, t-tests and linear models on log PW are reasonable.
 
 ![fig02_year](../figures/fig02_year.png)
 
@@ -49,6 +49,10 @@
 ![fig12_duplicates](../figures/fig12_duplicates.png)
 
 **Identical rows look like real separate filings, which supports keeping them (cleaning step 1).** 34% of rows have an identical twin; the share rises from 18% at employers with 2–10 filings to 55% at the largest, and it is 36% for CERTIFIED against 16% for WITHDRAWN. A copying error wouldn't depend on employer size or outcome. Because one employer's filings are so similar, tests must cluster by employer.
+
+![fig15_basic_questions](../figures/fig15_basic_questions.png)
+
+**Basic questions 1, 4 and 5.** The 10 largest employers file 16% of all filings (INFOSYS, TATA CONSULTANCY SERVICES, GOOGLE, AMAZON COM SERVICES, ERNST AND YOUNG U S lead); the median prevailing wage rose 32.8% from FY2017 to FY2022; the West pays the most and the Midwest the least.
 
 ## What this means for the next steps
 

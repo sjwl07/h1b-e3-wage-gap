@@ -20,6 +20,7 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import chi2_contingency
 
+from clean import PAY_MULT
 from config import DATA_PROCESSED, EXPLORE_PATH, FIGURES, REPORT
 from tests_spec import MIN_CELL, relative_pw, volume_bin
 
@@ -59,15 +60,28 @@ def load():
     return df
 
 
-def fig_wage_distribution(df):
+def fig_wage_distribution(df, before):
+    """`before`: raw prevailing wage x its stated pay unit, i.e. annualized without any cleaning."""
     w = df["annual_pw"].dropna()
-    fig, ax = plt.subplots(1, 2, figsize=(11, 4))
-    ax[0].hist(w / 1e3, bins=120, color="tab:blue")
-    ax[0].set(xlabel="Annual prevailing wage ($k)", ylabel="Filings", title="Raw")
-    ax[1].hist(np.log(w), bins=100, color="tab:green")
-    ax[1].set(xlabel="log(annual prevailing wage)", title="Log")
+    before = before[before > 0]
+    fig, ax = plt.subplots(1, 3, figsize=(16, 4))
+    bins = np.linspace(np.log10(before.min()), np.log10(before.max()), 150)
+    ax[0].hist(np.log10(before), bins=bins, color="tab:gray", log=True, label="before cleaning")
+    ax[0].hist(np.log10(w), bins=bins, color="tab:green", alpha=0.7, log=True, label="after cleaning")
+    ticks = range(int(np.floor(bins[0])), int(np.ceil(bins[-1])) + 1, 2)
+    names = {0: "$1", 1: "$10", 2: "$100", 3: "$1k", 4: "$10k", 5: "$100k", 6: "$1M", 7: "$10M", 8: "$100M", 9: "$1B"}
+    ax[0].set_xticks(list(ticks), [names[t] for t in ticks])
+    ax[0].set(xlabel="Annual prevailing wage (log scale)", ylabel="Filings (log scale)",
+              title="Before vs after cleaning")
+    ax[0].legend(fontsize=8)
+    ax[1].hist(w / 1e3, bins=120, color="tab:blue")
+    ax[1].set(xlabel="Annual prevailing wage ($k)", ylabel="Filings", title="After cleaning, dollars")
+    ax[2].hist(np.log(w), bins=100, color="tab:green")
+    ax[2].set(xlabel="log(annual prevailing wage)", title="After cleaning, log")
     save(fig, "fig01_wage_distribution")
-    STATS["wage"] = {"n": int(len(w)), "median": float(w.median()), "mean": float(w.mean()),
+    STATS["wage"] = {"n_before": int(len(before)), "min_before": float(before.min()),
+                     "max_before": float(before.max()),
+                     "n": int(len(w)), "median": float(w.median()), "mean": float(w.mean()),
                      "skew_raw": round(float(w.skew()), 2), "skew_log": round(float(np.log(w).skew()), 2),
                      "p01": float(w.quantile(0.01)), "p99": float(w.quantile(0.99)),
                      "min": float(w.min()), "max": float(w.max())}
@@ -239,16 +253,36 @@ def fig_seniority(df):
     STATS["seniority"] = t.set_index("label").round(4).to_dict("index")
 
 
-def fig_missingness():
-    raw = pd.read_parquet(EXPLORE_PATH)
+def fig_missingness(raw):
     cols = ["quarter", "employer_country", "worksite_state", "prevailing_wage", "wage_offered_fy2019", "unit_of_pay"]
     t = raw[cols].isna().groupby(raw["fiscal_year"]).mean().mul(100).T
-    del raw
     fig, ax = plt.subplots(figsize=(9, 3.8))
     sns.heatmap(t, annot=True, fmt=".0f", cmap="Reds", vmin=0, vmax=100, ax=ax, cbar_kws={"label": "% blank"})
     ax.set(xlabel="Fiscal year", ylabel="", title="Blank cells by year in the source files (exploration set)")
     save(fig, "fig10_missingness")
     STATS["missingness"] = {c: {int(y): round(v, 2) for y, v in t.loc[c].items()} for c in cols}
+
+
+def fig_basic_questions(df):
+    """One panel per basic question without its own figure: top employers, wage growth, regional pay."""
+    vc = df["employer_key"].value_counts()
+    top = vc.head(10)
+    med = df.groupby("fiscal_year")["annual_pw"].median().dropna()
+    regions = ["West", "Northeast", "South", "Midwest"]
+    reg = df.groupby("worksite_region", observed=True)["annual_pw"].median().reindex(regions)
+    fig, ax = plt.subplots(1, 3, figsize=(16, 4))
+    ax[0].barh(top.index[::-1].astype(str), 100 * top.values[::-1] / len(df), color="tab:blue")
+    ax[0].set(xlabel="% of filings", title=f"Q1: top 10 employers ({top.sum() / len(df):.0%} of filings)")
+    ax[0].tick_params(axis="y", labelsize=7)
+    ax[1].plot(med.index, med.values / 1e3, "o-")
+    ax[1].set(xlabel="Fiscal year (FY2019 has no prevailing wage)", ylabel="Median annual PW ($k)",
+              title=f"Q4: median prevailing wage, {100 * (med[2022] / med[2017] - 1):+.0f}% FY2017–22")
+    ax[2].bar(regions, reg.values / 1e3, color="tab:green")
+    ax[2].set(ylabel="Median annual PW ($k)", title="Q5: median prevailing wage by region")
+    save(fig, "fig15_basic_questions")
+    STATS["basic"] = {"top10_share": round(float(top.sum() / len(df)), 3),
+                      "top5": [str(k) for k in top.index[:5]],
+                      "region_median": reg.to_dict()}
 
 
 def cramers_v(x, y):
@@ -317,7 +351,9 @@ def write_report():
 
     figs = [
         ("fig01_wage_distribution",
-         f"**The prevailing wage is moderately right-skewed; log wage is almost exactly symmetric.** Annual PW has "
+         f"**Cleaning removes the impossible tails, and log wage is almost exactly symmetric.** Before cleaning, "
+         f"wage × stated unit runs from ${w['min_before']:,.2f} to ${w['max_before']:,.0f} a year (unit errors and "
+         f"outliers, left). After cleaning, annual PW has "
          f"skew {w['skew_raw']} (median {money(w['median'])}, mean {money(w['mean'])}); log PW has skew "
          f"{w['skew_log']}. After cleaning, the range is {money(w['min'])} (exactly $7.25 × 2,080 h, the federal "
          f"minimum wage) to {money(w['max'])} (physicians). Means, t-tests and linear models on log PW are reasonable."),
@@ -400,6 +436,10 @@ def write_report():
          f"at the largest, and it is {pct(dup['by_status']['CERTIFIED'], 0)} for CERTIFIED against "
          f"{pct(dup['by_status']['WITHDRAWN'], 0)} for WITHDRAWN. A copying error wouldn't depend on employer size or "
          f"outcome. Because one employer's filings are so similar, tests must cluster by employer."),
+        ("fig15_basic_questions",
+         f"**Basic questions 1, 4 and 5.** The 10 largest employers file {pct(s['basic']['top10_share'], 0)} of all "
+         f"filings ({', '.join(s['basic']['top5'])} lead); the median prevailing wage rose "
+         f"{yr['growth_2017_2022_pct']}% from FY2017 to FY2022; the West pays the most and the Midwest the least."),
     ]
 
     lines = [
@@ -427,11 +467,16 @@ def write_report():
 
 
 def main():
-    fig_missingness()
+    raw = pd.read_parquet(EXPLORE_PATH)
+    fig_missingness(raw)
+    before = raw["prevailing_wage"] * raw["unit_of_pay"].astype(str).map(PAY_MULT).astype(float)
+    del raw
     df = load()
     STATS["n_rows"] = len(df)
-    for f in [fig_wage_distribution, fig_year, fig_state, fig_soc, fig_visa, fig_status, fig_employer_volume,
-              fig_top_filers, fig_seniority, fig_associations, fig_duplicates]:
+    fig_wage_distribution(df, before)
+    del before
+    for f in [fig_year, fig_state, fig_soc, fig_visa, fig_status, fig_employer_volume,
+              fig_top_filers, fig_seniority, fig_associations, fig_duplicates, fig_basic_questions]:
         f(df)
         print("done", f.__name__)
     REPORT.mkdir(parents=True, exist_ok=True)

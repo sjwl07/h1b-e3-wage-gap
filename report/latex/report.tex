@@ -95,7 +95,7 @@
 \toprule
 Group name & \todo{Group name} \\
 Dataset & kaggle.com/datasets/jishnukoliyadan/lca-programs-h1b-h1b1-e3-visa-petitions \\
-Code & \todo{github.com/\ldots\ (scripts and README)} \\
+Code & \url{https://github.com/sjwl07/h1b-e3-wage-gap} \\
 \bottomrule
 \end{tabularx}}
 
@@ -105,11 +105,11 @@ Code & \todo{github.com/\ldots\ (scripts and README)} \\
 \toprule
 \textbf{\#} & \textbf{Name} & \textbf{Roll no.} & \textbf{Institute email} & \textbf{Contribution} \\
 \midrule
-1 & \todo{Name 1} & \todo{Roll no.} & \todo{email} & \todo{Contribution} \\
-2 & \todo{Name 2} & \todo{Roll no.} & \todo{email} & \todo{Contribution} \\
-3 & \todo{Name 3} & \todo{Roll no.} & \todo{email} & \todo{Contribution} \\
-4 & \todo{Name 4} & \todo{Roll no.} & \todo{email} & \todo{Contribution} \\
-5 & \todo{Name 5} & \todo{Roll no.} & \todo{email} & \todo{Contribution} \\
+1 & Shivam Jhunjhunuwala & 2023505 & shivam23505@iiitd.ac.in & Data loading, held-out split, report \\
+2 & Ramanujan Gopalan & 2023424 & ramanujan23424@iiitd.ac.in & Data dictionary, cleaning rules \\
+3 & Saanvi Singh & 2023454 & saanvi23454@iiitd.ac.in & EDA figures and captions \\
+4 & Mohammad Umar & 2023324 & umar23324@iiitd.ac.in & Problem statements, pre-registration, power \\
+5 & Mayank Kumar & 2023317 & mayank23317@iiitd.ac.in & Hypothesis tests, robustness checks \\
 \bottomrule
 \end{tabularx}}
 \vspace{12pt}
@@ -161,7 +161,7 @@ $3{,}973{,}349\times12\approx47.7$M.}
 \code{soc\_title} & nominal & occupation, 1{,}123 titles after cleaning; 30\% are ``Software Developers, Applications'' \\
 \code{worksite\_state} & nominal & where the worker will work, 55 states and territories \\
 \code{fiscal\_year} & discrete & US fiscal year of the decision, 2017--2022 \\
-\code{employer\_key} & nominal (ID) & normalised employer name, 165{,}799 employers; used for grouping, not encoded \\
+\code{employer\_key} & nominal (ID) & normalised employer name: 165{,}799 in all six years, 132{,}485 in the exploration set; used for grouping, not encoded \\
 \code{employer\_volume} & discrete & derived: filings by that employer that year, 1--21{,}448 \\
 \code{full\_time} & nominal & full-time position (98.2\%) \\
 \bottomrule
@@ -227,6 +227,9 @@ employer country blank (100{,}916) or ``Georgia''
 FY2019 worksite 88\% blank
  & flagged, not imputed
  & worksite and employer state agree in only 52\% of rows, and the blank rows differ (93\% vs 61\% certified), so imputing would invent locations \\
+columns to encode
+ & year, quarter, status, visa, pay unit, full-time, states, region one-hot; flags 0/1; employer volume logged
+ & one-hot assumes no order, so wages may move non-linearly by year; the two responses stay numeric (\code{log\_pw}, \code{denied} 0/1) for the tests; volume is very skewed (1--21{,}448) \\
 high-cardinality text
  & one-hot only 10 low-cardinality columns; SOC as top 50 + \code{Other} (87.7\% of rows); employer and job title not one-hot
  & 132k employers and 375k job titles would add half a million near-empty columns; they enter as filing volume and seniority flags instead \\
@@ -258,51 +261,57 @@ Missing cells (not by design) & 1.92\% & 1.56\% \\
 
 Cleaning turned the wage into one comparable annual number: the lowest cleaned wage is exactly
 $\$7.25\times2{,}080$, the US federal minimum wage, a sign the unit fixes worked. Its log is almost
-symmetric (skew $-0.04$, against $1.14$ for dollars). Harmonising occupation and employer names
+symmetric (skew $-0.04$, against $1.14$ for dollars; Fig.~\ref{fig:clean}). Harmonising occupation and employer names
 is what makes the within-occupation and within-employer comparisons of Section~5 possible.
+
+\begin{figure*}[!t]
+  \figfile{\figdir fig01_wage_distribution.png}{4.2cm}
+  \caption{Before cleaning, wages span \$25 to \$1B a year (grey); after, \$15k--\$462k with a symmetric log (right).}
+  \label{fig:clean}
+\end{figure*}
 
 %-----------------------------------------------------------------------
 \section{Basic questions and problem statement}
 
 \minihead{Basic questions}
 \begin{enumerate}[label=\arabic*.]
-  \item Which employers file the most? (Cognizant, Infosys, TCS, Google, Amazon; the top 10 file 15\%.)
+  \item Which employers file the most? (Infosys, TCS, Google, Amazon, EY; the top 10 file 16\%; Fig.~\ref{fig:basic}.)
   \item Which jobs? (Mostly software: computer titles are 65\% of filings; Fig.~\ref{fig:soc}.)
   \item How many filings are certified? (91\%; only 0.87\% are denied.)
-  \item Have wages risen? (Median prevailing wage $+33\%$ from FY2017 to FY2022.)
-  \item Do some regions pay more? (West \$105k vs Midwest \$78k.)
+  \item Have wages risen? (Median prevailing wage $+33\%$ from FY2017 to FY2022; Fig.~\ref{fig:basic}.)
+  \item Do some regions pay more? (West \$105k vs Midwest \$78k; Fig.~\ref{fig:basic}.)
 \end{enumerate}
 
 \begin{figure*}[!t]
+  \figfile{\figdir fig15_basic_questions.png}{4.2cm}
+  \caption{Basic questions 1, 4, 5: the top 10 employers file 16\%, the median wage rose 33\%, the West pays most.}
+  \label{fig:basic}
+\end{figure*}
+
+\begin{figure*}[!t]
   \figfile{\figdir fig04_soc.png}{5.0cm}
-  \caption{This is mostly a computer-jobs dataset: ``Software Developers, Applications'' alone is
-  30\% of filings, and within a title the 75th-percentile wage is 1.4$\times$ the 25th, so
-  occupation has to be held fixed before comparing anything.}
+  \caption{Software jobs dominate (one title is 30\% of filings) and wages vary within each title,
+  so occupation must be held fixed.}
   \label{fig:soc}
 \end{figure*}
 
 \begin{figure*}[!t]
   \figfile{\figdir fig05_visa.png}{4.6cm}
-  \caption{Relative prevailing wage = log wage minus the median of the same SOC title $\times$
-  state $\times$ year. E-3 filings sit $+8.8\%$ above comparable jobs on average, H-1B $+1.6\%$
-  (left); the gap holds at every employer size above 10 filings a year (about $+13\%$ vs
-  $+1$ to $+3\%$, right).}
+  \caption{E-3 filings sit $+8.8\%$ above the median of the same SOC $\times$ state $\times$ year,
+  H-1B $+1.6\%$, and the gap holds at every employer size.}
   \label{fig:visa}
 \end{figure*}
 
 \begin{figure*}[!t]
   \figfile{\figdir fig07_employer_volume.png}{4.6cm}
-  \caption{Denial rates peak at employers with 2--10 filings a year (3.2\%), against 0.23\% for the
-  largest filers (left). Half of E-3 filings come from employers with $\le$10 filings, against
-  18\% of H-1B, yet E-3 is denied more even within the same size group (right).}
+  \caption{Denials peak at employers with 2--10 filings a year, yet E-3 is denied more within every size group.}
   \label{fig:volume}
 \end{figure*}
 
 \begin{figure}[!ht]
   \figfile{\figdir fig09_seniority.png}{3.9cm}
-  \caption{Job-title keywords move the relative prevailing wage as expected (senior $+10\%$,
-  junior $-16\%$), so relative wage tracks the wage level an employer chose, a column this
-  extract doesn't have.}
+  \caption{Title keywords move relative wage as expected (senior $+10\%$, junior $-16\%$), so it
+  tracks the wage level an employer chose.}
   \label{fig:senior}
 \end{figure}
 
@@ -322,8 +331,10 @@ wage is set by DOL from occupation, area and wage level; the visa isn't an input
 difference'' is a natural default for P1. A difference would mean employers place the two groups
 at different wage levels, which the data records only indirectly (Fig.~\ref{fig:senior}). P1 holds
 fixed what the basic questions show moves wages most (occupation, place, year) and then the
-employer. P2 asks whether a 5.8$\times$ raw denial gap survives the main confounder found in EDA,
-employer size (Fig.~\ref{fig:volume}), a possible Simpson's paradox.}
+employer. P2 asks whether the raw denial gap (E-3 denied 5.8$\times$ as often in the exploration
+set, 6.9$\times$ in the confirmation set) survives the main confounder found in EDA, employer size
+(Fig.~\ref{fig:volume}). EDA rules out a Simpson's paradox: E-3 is denied more within every size
+group too, so the question is how much of the gap size explains.}
 
 %-----------------------------------------------------------------------
 \section{Statistical inferences}
@@ -343,8 +354,9 @@ independent. Four tests, two-sided, family-wise $\alpha=0.05$ with \textbf{Holm}
 this many rows almost anything is significant, so each result is also judged by whether its 95\%
 CI clears the smallest meaningful difference (MID): \emph{meaningful} (CI beyond the MID),
 \emph{detectable, possibly too small} (CI overlaps it), \emph{negligible} (inside it, confirmed
-by TOST) or \emph{inconclusive}. Power at the MID, from exploration-set SEs: T1 1.00, T2 0.999,
-T3 0.16, T4 0.93.}
+by TOST) or \emph{inconclusive}. Power at the MID, from exploration-set SEs scaled to the
+confirmation set's employer count ($\times1.99$) at Holm's strictest $\alpha=0.0125$: T1 1.00,
+T2 0.999, T3 0.16, T4 0.93.}
 
 %------------------------------------------------------------ Test 1
 \subsection*{Test 1 (P1): do E-3 filings carry a different prevailing wage for the same job,
@@ -410,9 +422,7 @@ and unchanged without the largest employer.
   \figfile{\figdir fig13_inference_estimates.png}{4.3cm}
 
   \figfile{\figdir fig14_inference_by_year.png}{4.3cm}
-  \caption{Top: all four estimates with 95\% CIs; the grey band is $\pm$MID. Tests 1--3 clear it;
-  Test 4 straddles it. Bottom: Tests 1 and 3 estimated year by year (exploratory, not
-  pre-registered). The wage gap is stable at $+8$ to $+12\%$; the denial gap shrinks after FY2020.}
+  \caption{Top: estimates with 95\% CIs (grey $=\pm$MID). Bottom: Tests 1, 3 by year (exploratory); the denial gap shrinks from FY2018.}
   \label{fig:year}
 \end{figure*}
 
@@ -445,7 +455,8 @@ leaves open; fixed effects do this without assuming anything about how employers
 \toprule
 \textbf{Also considered} & \textbf{Why we did not use it} \\
 \midrule
-Paired $t$-test on cell means & weights a cell with 1 E-3 and 500 H-1B filings like a balanced one \\
+Paired $t$-test & on cell means it weights a cell with 1 E-3 and 500 H-1B filings like a balanced one. Run as a check with one gap per employer (695, independent): $+5.3\%$, $t=6.59$, $p=9\times10^{-11}$ \\
+Wilcoxon signed-rank & tests the median employer gap, not a mean in \%. Run as a check: median $+1.5\%$, 55\% of employers file E-3 higher, $p=3\times10^{-12}$ \\
 Matching E-3 to H-1B filings & discards most H-1B filings for no gain in bias \\
 Mixed model & random effects assume away the employer confounding being tested \\
 \bottomrule
@@ -489,7 +500,7 @@ Smallest difference that matters & 0.5 percentage points \\
 \end{tabularx}}
 
 $y$ = 1 if denied. Size groups: 1, 2--10, 11--100, 101--1000, $>$1000 filings a year; all six
-years are used. 0.5\,pp, because the H-1B denial rate is 0.78\%, so it means a $\ge$1.6$\times$
+years are used. 0.5\,pp, because the H-1B denial rate is 0.78\% (exploration set), so it means a $\ge$1.6$\times$
 higher risk, and it is over half the whole FY2017--22 fall in the denial rate (1.36\% $\to$ 0.49\%).
 
 \tpart{b}{Other tests we considered}
@@ -523,8 +534,11 @@ Verdict & meaningful: the whole CI is above 0.5\,pp \\
 \end{tabularx}}
 
 Among employers of the same size in the same year, E-3 filings are denied 3.8\,pp more often;
-employer size explains only 17\% of the raw gap. The power check expected only 0.16 power at the
-MID, but the effect turned out about eight times larger. \emph{Exploratory, not pre-registered:}
+employer size explains only 17\% of the raw gap: it shrinks the gap but doesn't reverse it, so
+there is no Simpson's paradox. The power check gave only 0.16 because it assumed an SE of
+0.33\,pp at $\alpha=0.0125$; the realised SE was 0.27\,pp (power 0.26 at that $\alpha$, 0.46 at
+0.05), and the effect is about eight times the MID, so low power doesn't limit this result.
+\emph{Exploratory, not pre-registered:}
 the gap shrinks from $+6.6$\,pp in FY2018 to $+1.6$\,pp in FY2022 (Fig.~\ref{fig:year}).
 
 %------------------------------------------------------------ Test 4
@@ -554,6 +568,8 @@ its experience with the process and its form-filling practice, which size groups
 \textbf{Also considered} & \textbf{Why we did not use it} \\
 \midrule
 Conditional (fixed-effects) logit & planned as a check, but the exact likelihood failed on employer-years with thousands of filings. With one binary regressor its score test equals the CMH test by employer $\times$ year, which we ran instead: OR 1.89, $p=7.6\times10^{-6}$ \\
+Employer-level paired $t$ & one gap per employer (1{,}547), no regression. Run as a check: $+0.59$\,pp, $p=0.018$ \\
+Wilcoxon signed-rank & only 306 employers have a non-zero gap. Run as a check: $p=0.0005$ \\
 Logit with employer dummies & 1{,}547 employers' dummies give biased estimates when most employer-years have no denial (incidental-parameter problem) \\
 \bottomrule
 \end{tabularx}}
@@ -578,6 +594,47 @@ reaches the 0.5\,pp that matters. Relative to these employers' low H-1B rate (0.
 2.7$\times$. Across the two populations, 86\% of the Test~3 gap disappears when the employer is
 held fixed: most of the E-3 denial gap is \emph{between} employers.
 
+%------------------------------------------------------------ comparison
+\subsection*{Main tests against other families of tests}
+All four main tests are the same fixed-effects regression, so we compare each with tests from
+other families. The employer-level checks for Tests 2 and 4 were added after the pre-registered run.
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{0.5cm} L{3.3cm} Y L{0.8cm}@{}}
+\toprule
+\textbf{Test} & \textbf{Method (family)} & \textbf{Result} & \textbf{Agrees} \\
+\midrule
+T1 & FE regression, clustered $t$ (main) & $+9.1\%$, $p=3\times10^{-42}$ & -- \\
+   & wild-cluster bootstrap (resampling) & $p\le0.0005$ & yes \\
+   & Welch $t$ on relative wage (two-sample) & $+5.7\%$, $p=2\times10^{-93}$ & yes \\
+   & Mann--Whitney U (rank) & $p=10^{-155}$ & yes \\
+   & without largest employer & $+9.2\%$, $p=4\times10^{-42}$ & yes \\
+\midrule
+T2 & FE regression (main) & $+6.8\%$, $p=3\times10^{-19}$ & -- \\
+   & wild-cluster bootstrap (resampling) & $p\le0.0005$ & yes \\
+   & paired $t$, one gap per employer & $+5.3\%$, $p=9\times10^{-11}$ & yes \\
+   & Wilcoxon signed-rank (rank) & median $+1.5\%$, $p=3\times10^{-12}$ & yes \\
+   & without largest employer & $+6.7\%$, $p=10^{-17}$ & yes \\
+\midrule
+T3 & FE linear probability (main) & $+3.79$\,pp, $p=4\times10^{-45}$ & -- \\
+   & wild-cluster bootstrap (resampling) & $p\le0.0005$ & yes \\
+   & CMH by size $\times$ year (contingency) & OR 3.82, $p<10^{-100}$ & yes \\
+   & logit, same FE, clustered (GLM) & OR 3.80, $p=3\times10^{-137}$ & yes \\
+   & without largest employer & $+3.82$\,pp, $p=2\times10^{-45}$ & yes \\
+\midrule
+T4 & FE linear probability (main) & $+0.51$\,pp, $p=6\times10^{-4}$ & -- \\
+   & wild-cluster bootstrap (resampling) & $p\le0.0005$ & yes \\
+   & CMH by employer $\times$ year (= conditional logit) & OR 1.89, $p=8\times10^{-6}$ & yes \\
+   & paired $t$, one gap per employer & $+0.59$\,pp, $p=0.018$ & yes \\
+   & Wilcoxon signed-rank (rank) & $p=0.0005$ & yes \\
+   & without largest employer & $+0.51$\,pp, $p=9\times10^{-4}$ & yes \\
+\bottomrule
+\end{tabularx}}
+
+Every alternative gives the same direction and decision. The Welch test's smaller gap ($+5.7\%$)
+measures a median-based relative wage, not the mean gap, and the employer-level tests weight each
+employer equally, so a typical employer's gap is smaller than the filing-weighted one; Test 4's
+paired $t$ ($p=0.018$) is the weakest result, matching its ``possibly too small'' verdict.
+
 
 %-----------------------------------------------------------------------
 \section{Limitations}
@@ -595,8 +652,8 @@ held fixed: most of the E-3 denial gap is \emph{between} employers.
   data.
   \item \textbf{Tests 2 and 4 cover only employers filing both visas}, which are larger than average.
   \item \textbf{Denial here is DOL's check of the form}, not the visa decision, which USCIS makes later.
-  \item \textbf{Exploratory extras.} The year-by-year results were not pre-registered and are not
-  Holm-corrected.
+  \item \textbf{Exploratory extras.} The year-by-year results and the employer-level checks of
+  Tests 2 and 4 were not pre-registered and are not Holm-corrected.
 \end{itemize}
 
 \end{document}

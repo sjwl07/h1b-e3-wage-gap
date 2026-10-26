@@ -134,6 +134,20 @@
    }
   },
   "T2": {
+   "employer-level paired t (one gap per employer)": {
+    "mean gap": 0.05200285918443634,
+    "t": 6.589928846597104,
+    "df": 694,
+    "p": 8.706104991109125e-11
+   },
+   "Wilcoxon signed-rank on employer gaps": {
+    "median gap": 0.015155343940694368,
+    "W": 61362.5,
+    "p": 2.7388490881776403e-12,
+    "employers": 695,
+    "non-zero gaps": 604,
+    "share of employers with E-3 higher": 0.5525179856115108
+   },
    "without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US)": {
     "beta": 0.06503935725470716,
     "se": 0.007408159053998661,
@@ -164,6 +178,20 @@
     "chi2": 20.034342406608825,
     "p": 7.60637751473503e-06,
     "informative strata": 449
+   },
+   "employer-level paired t (one gap per employer)": {
+    "mean gap": 0.005894395357285837,
+    "t": 2.372720972715191,
+    "df": 1546,
+    "p": 0.01777933340621351
+   },
+   "Wilcoxon signed-rank on employer gaps": {
+    "median gap": 0.0,
+    "W": 18093.0,
+    "p": 0.0004985371594804613,
+    "employers": 1547,
+    "non-zero gaps": 306,
+    "share of employers with E-3 higher": 0.049773755656108594
    },
    "without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US)": {
     "beta": 0.005124061738197574,

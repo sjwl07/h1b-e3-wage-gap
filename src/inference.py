@@ -146,16 +146,36 @@ def size_checks(pop, t):
     return out
 
 
+def employer_paired(pop, t):
+    """T2, T4 (added after the pre-registered run): one gap per employer, the average of its within-cell
+    E-3 minus H-1B mean differences, so employers are the independent units. Then a one-sample t-test
+    and a Wilcoxon signed-rank test (zero gaps dropped) on those gaps: no regression, no clustering."""
+    d = pop[informative(pop, "e3", t["cells"])]
+    m = d.groupby(t["cells"] + ["e3"], observed=True)[t["y"]].mean().unstack("e3")
+    gap = (m[1] - m[0]).groupby(level="employer_key").mean()
+    tt = stats.ttest_1samp(gap, 0)
+    w = stats.wilcoxon(gap)
+    return {
+        "employer-level paired t (one gap per employer)": {
+            "mean gap": float(gap.mean()), "t": float(tt.statistic), "df": len(gap) - 1, "p": float(tt.pvalue)},
+        "Wilcoxon signed-rank on employer gaps": {
+            "median gap": float(gap.median()), "W": float(w.statistic), "p": float(w.pvalue),
+            "employers": len(gap), "non-zero gaps": int((gap != 0).sum()),
+            "share of employers with E-3 higher": float((gap > 0).mean())},
+    }
+
+
 def employer_checks(pop, t):
     """T4: with one binary regressor, the CMH test stratified by employer x year is the score test of the
     conditional (fixed-effects) logit; statsmodels' exact conditional logit recurses once per row and
     fails on employer-years with thousands of filings."""
     d = pop[informative(pop, "e3", t["cells"])]
-    return {"CMH by employer x year (= conditional-logit score test; ignores clustering)": cmh(d, t["cells"])}
+    return {"CMH by employer x year (= conditional-logit score test; ignores clustering)": cmh(d, t["cells"]),
+            **employer_paired(pop, t)}
 
 
 # T2 shares T1's population, so the naive two-sample checks would only repeat T1's
-EXTRA_CHECKS = {"T1": naive_checks, "T3": size_checks, "T4": employer_checks}
+EXTRA_CHECKS = {"T1": naive_checks, "T2": employer_paired, "T3": size_checks, "T4": employer_checks}
 
 
 # ---------- figures ----------
@@ -173,7 +193,7 @@ def figures(results, years):
             r = results[n]
             axis.errorbar(f(r["beta"]), i, xerr=[[f(r["beta"]) - f(r["ci95"][0])], [f(r["ci95"][1]) - f(r["beta"])]],
                           fmt="o", capsize=5, color="tab:red" if r["holm_reject"] else "tab:gray")
-            axis.text(f(r["ci95"][1]), i + 0.18, f"  {r['verdict']}", fontsize=8)
+            axis.text(f(r["beta"]), i - 0.22, r["verdict"], ha="center", fontsize=8)
         axis.set_yticks(range(len(names)), [f"{n}: {TESTS[n]['label'].split(', ', 1)[1]}" for n in names], fontsize=8)
         axis.set_ylim(-0.6, len(names) - 0.4)
         axis.invert_yaxis()
