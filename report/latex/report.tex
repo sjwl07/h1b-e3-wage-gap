@@ -274,7 +274,7 @@ is what makes the within-occupation and within-employer comparisons of Section~5
 \end{enumerate}
 
 \begin{figure*}[!t]
-  \figfile{\figdir fig04_soc.png}{5.2cm}
+  \figfile{\figdir fig04_soc.png}{5.0cm}
   \caption{This is mostly a computer-jobs dataset: ``Software Developers, Applications'' alone is
   30\% of filings, and within a title the 75th-percentile wage is 1.4$\times$ the 25th, so
   occupation has to be held fixed before comparing anything.}
@@ -337,7 +337,7 @@ prevailing wage) and rows with a cleaned wage and known worksite.}
 \[ y_i=\beta\,\mathrm{E3}_i+\alpha_{c(i)}+\varepsilon_i, \]
 where $\alpha_c$ is a fixed effect for the comparison cell (e.g.\ SOC $\times$ state $\times$
 year). Fixed effects compare E-3 and H-1B filings only inside the same cell; they are removed by
-demeaning within cells. Standard errors are \textbf{clustered by employer} (CR1) with a $t$
+demeaning within cells. So $\beta$ averages the within-cell gaps $\mu_{\text{E3},c}-\mu_{\text{H1B},c}$, and $\beta=0$ is the two-group null $\mu_{\text{E3}}=\mu_{\text{H1B}}$ among like filings. Standard errors are \textbf{clustered by employer} (CR1) with a $t$
 reference on $G-1$ df ($G$ = employers): one employer's filings are near-copies, so they are not
 independent. Four tests, two-sided, family-wise $\alpha=0.05$ with \textbf{Holm} correction. With
 this many rows almost anything is significant, so each result is also judged by whether its 95\%
@@ -354,8 +354,8 @@ state and year?}
 {\small
 \begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
 \toprule
-$H_0$ & $\beta=0$ \\
-$H_1$ & $\beta\neq0$ \\
+$H_0$ & $\mu_{\text{E3}}=\mu_{\text{H1B}}$: equal mean log prevailing wage within the same SOC $\times$ state $\times$ year \\
+$H_1$ & $\mu_{\text{E3}}\neq\mu_{\text{H1B}}$ ($\beta\neq0$) \\
 Significance level & $\alpha=0.05$ family-wise (Holm, 4 tests) \\
 Side & two-sided \\
 Test & $t$-test on $\beta$, fixed effects for SOC $\times$ state $\times$ year, employer-clustered SE \\
@@ -424,8 +424,8 @@ and unchanged without the largest employer.
 {\small
 \begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
 \toprule
-$H_0$ & $\beta=0$ \\
-$H_1$ & $\beta\neq0$ \\
+$H_0$ & $\mu_{\text{E3}}=\mu_{\text{H1B}}$: equal mean log prevailing wage within the same employer, SOC, state and year \\
+$H_1$ & $\mu_{\text{E3}}\neq\mu_{\text{H1B}}$ ($\beta\neq0$) \\
 Significance level & $\alpha=0.05$ family-wise (Holm) \\
 Side & two-sided \\
 Test & as Test 1, cells = employer $\times$ SOC $\times$ state $\times$ year \\
@@ -479,8 +479,8 @@ populations, as Test~2 covers only employers filing both visas), so the premium 
 {\small
 \begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
 \toprule
-$H_0$ & $\beta=0$ \\
-$H_1$ & $\beta\neq0$ \\
+$H_0$ & $p_{\text{E3}}=p_{\text{H1B}}$: equal denial rate within the same employer-size group and year \\
+$H_1$ & $p_{\text{E3}}\neq p_{\text{H1B}}$ ($\beta\neq0$) \\
 Significance level & $\alpha=0.05$ family-wise (Holm) \\
 Side & two-sided \\
 Test & linear probability model, fixed effects for employer-size group $\times$ year, employer-clustered SE \\
@@ -535,8 +535,8 @@ the gap shrinks from $+6.6$\,pp in FY2018 to $+1.6$\,pp in FY2022 (Fig.~\ref{fig
 {\small
 \begin{tabularx}{\linewidth}{@{}K{3.4cm} Y@{}}
 \toprule
-$H_0$ & $\beta=0$ \\
-$H_1$ & $\beta\neq0$ \\
+$H_0$ & $p_{\text{E3}}=p_{\text{H1B}}$: equal denial rate within the same employer and year \\
+$H_1$ & $p_{\text{E3}}\neq p_{\text{H1B}}$ ($\beta\neq0$) \\
 Significance level & $\alpha=0.05$ family-wise (Holm) \\
 Side & two-sided \\
 Test & as Test 3, cells = employer $\times$ year \\
