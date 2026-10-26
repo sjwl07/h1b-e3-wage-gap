@@ -1,10 +1,10 @@
-"""Step 6: power check for the pre-registered tests, using exploration-set SEs.
+"""Step 6: power check for the planned tests: the chance each test detects a gap
+exactly the size of the smallest meaningful difference (MID).
 
-Each model is fit on the exploration set, but only its clustered SE is read,
-never the estimate. The confirmation set has ~1/4 as many employers
-(clusters), so the SE is scaled by sqrt(explore clusters / confirm clusters).
-Power is for a two-sided test at the smallest meaningful difference (MID) and
-Holm's strictest threshold alpha = 0.05/4 (worst case).
+Each model is fit on the exploration set to estimate how noisy it is (its SE);
+the estimate itself is never read. The confirmation set has ~1/4 as many
+employers, so its SE will be about sqrt(4) = 2x larger, and the SE is scaled up
+to match. Power uses alpha = 0.05/4, the strictest threshold Holm can apply.
 """
 import json
 

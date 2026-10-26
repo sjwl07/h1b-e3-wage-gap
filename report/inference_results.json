@@ -11,7 +11,7 @@
    "n_cells": 2729,
    "n_treated": 10433,
    "clusters_treated": 3085,
-   "wild_p": 0.0005,
+   "boot_p": 0.0005,
    "label": "E-3 vs H-1B prevailing wage, same SOC \u00d7 state \u00d7 year",
    "mid": 0.04879016416943205,
    "unit": "log",
@@ -25,7 +25,6 @@
     0.074534931907127,
     0.09951868375760235
    ],
-   "p_tost": 0.9999999989937715,
    "verdict": "meaningful"
   },
   "T2": {
@@ -39,7 +38,7 @@
    "n_cells": 1906,
    "n_treated": 3356,
    "clusters_treated": 695,
-   "wild_p": 0.0005,
+   "boot_p": 0.0005,
    "label": "E-3 vs H-1B prevailing wage, same employer \u00d7 SOC \u00d7 state \u00d7 year",
    "mid": 0.04879016416943205,
    "unit": "log",
@@ -53,7 +52,6 @@
     0.05153302198129055,
     0.07933425194301243
    ],
-   "p_tost": 0.9904940624136358,
    "verdict": "meaningful"
   },
   "T3": {
@@ -67,7 +65,7 @@
    "n_cells": 30,
    "n_treated": 14587,
    "clusters_treated": 3802,
-   "wild_p": 0.0005,
+   "boot_p": 0.0005,
    "label": "E-3 vs H-1B denial rate, same employer-size bin \u00d7 year",
    "mid": 0.005,
    "unit": "pp",
@@ -81,7 +79,6 @@
     0.032626789190177245,
     0.04314720131709573
    ],
-   "p_tost": 1.0,
    "verdict": "meaningful"
   },
   "T4": {
@@ -95,7 +92,7 @@
    "n_cells": 3052,
    "n_treated": 8003,
    "clusters_treated": 1547,
-   "wild_p": 0.0005,
+   "boot_p": 0.0005,
    "label": "E-3 vs H-1B denial rate, same employer \u00d7 year",
    "mid": 0.005,
    "unit": "pp",
@@ -109,8 +106,7 @@
     0.002215487424638921,
     0.008084353716218122
    ],
-   "p_tost": 0.5399059979738499,
-   "verdict": "detectable, possibly too small"
+   "verdict": "possibly too small"
   }
  },
  "robustness": {
@@ -120,12 +116,6 @@
     "t": 20.704792843026173,
     "p": 2.267988418541773e-93,
     "naive SE": 0.002683487910055516
-   },
-   "naive Mann-Whitney U on relative PW": {
-    "median E-3": 0.010087129160651465,
-    "median H-1B": 0.0,
-    "U": 3628928165.5,
-    "p": 1.2775389367394647e-155
    },
    "without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US)": {
     "beta": 0.08792962866635325,
@@ -138,14 +128,8 @@
     "mean gap": 0.05200285918443634,
     "t": 6.589928846597104,
     "df": 694,
-    "p": 8.706104991109125e-11
-   },
-   "Wilcoxon signed-rank on employer gaps": {
-    "median gap": 0.015155343940694368,
-    "W": 61362.5,
-    "p": 2.7388490881776403e-12,
+    "p": 8.706104991109125e-11,
     "employers": 695,
-    "non-zero gaps": 604,
     "share of employers with E-3 higher": 0.5525179856115108
    },
    "without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US)": {
@@ -155,12 +139,6 @@
    }
   },
   "T3": {
-   "Cochran-Mantel-Haenszel by size x year (ignores clustering)": {
-    "pooled MH odds ratio": 3.8241556714353098,
-    "chi2": 1237.8177902269433,
-    "p": 0.0,
-    "informative strata": 30
-   },
    "logit with size x year FE, employer-clustered": {
     "OR": 3.795391883198681,
     "z": 24.94249914248524,
@@ -173,7 +151,7 @@
    }
   },
   "T4": {
-   "CMH by employer x year (= conditional-logit score test; ignores clustering)": {
+   "Cochran-Mantel-Haenszel by employer x year (ignores clustering)": {
     "pooled MH odds ratio": 1.8902716119348895,
     "chi2": 20.034342406608825,
     "p": 7.60637751473503e-06,
@@ -183,14 +161,8 @@
     "mean gap": 0.005894395357285837,
     "t": 2.372720972715191,
     "df": 1546,
-    "p": 0.01777933340621351
-   },
-   "Wilcoxon signed-rank on employer gaps": {
-    "median gap": 0.0,
-    "W": 18093.0,
-    "p": 0.0004985371594804613,
+    "p": 0.01777933340621351,
     "employers": 1547,
-    "non-zero gaps": 306,
     "share of employers with E-3 higher": 0.049773755656108594
    },
    "without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US)": {
@@ -273,6 +245,6 @@
   }
  },
  "n_confirm_rows": 791227,
- "wild_bootstrap_draws": 1999,
+ "bootstrap_draws": 1999,
  "seed": 42
 }

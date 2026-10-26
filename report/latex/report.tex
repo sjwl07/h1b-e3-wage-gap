@@ -149,7 +149,7 @@ worksite and employer state, year, quarter, visa class, status, pay unit, full-t
 and 13 numeric features and flags. The raw files alone already pass:
 $3{,}973{,}349\times12\approx47.7$M.}
 
-\minihead{Key features}
+\minihead{Key features} (every attribute's type, unit, range and missingness by year: \code{report/data\_dictionary.md})
 {\footnotesize
 \begin{tabularx}{\linewidth}{@{}L{2.65cm} L{1.5cm} Y@{}}
 \toprule
@@ -263,6 +263,10 @@ Cleaning turned the wage into one comparable annual number: the lowest cleaned w
 $\$7.25\times2{,}080$, the US federal minimum wage, a sign the unit fixes worked. Its log is almost
 symmetric (skew $-0.04$, against $1.14$ for dollars; Fig.~\ref{fig:clean}). Harmonising occupation and employer names
 is what makes the within-occupation and within-employer comparisons of Section~5 possible.
+\textbf{What we lost:} 21{,}680 wages (0.8\%) set to missing; all of FY2019 (17\% of rows) for
+wage questions, as it has no prevailing wage; the detail of the 1{,}073 rarer SOC titles, grouped
+as \code{Other} (12.3\% of rows) in the encoding; and any distinction between fuzzy-merged
+spellings, if a merge was wrong.
 
 \begin{figure*}[!t]
   \figfile{\figdir fig01_wage_distribution.png}{4.2cm}
@@ -289,7 +293,7 @@ is what makes the within-occupation and within-employer comparisons of Section~5
 \end{figure*}
 
 \begin{figure*}[!t]
-  \figfile{\figdir fig04_soc.png}{5.0cm}
+  \figfile{\figdir fig04_soc.png}{4.2cm}
   \caption{Software jobs dominate (one title is 30\% of filings) and wages vary within each title,
   so occupation must be held fixed.}
   \label{fig:soc}
@@ -336,6 +340,12 @@ set, 6.9$\times$ in the confirmation set) survives the main confounder found in 
 (Fig.~\ref{fig:volume}). EDA rules out a Simpson's paradox: E-3 is denied more within every size
 group too, so the question is how much of the gap size explains.}
 
+\field{Correlation, not causation:}{both statements are worded as differences between
+\emph{filings}, not effects of the visa. Australians may simply be hired into more senior roles,
+and worker experience and education aren't in the data. A causal claim would need worker-level
+data to compare similar workers, or a rule change that affects only one visa, studied before and
+after. Neither is available, so we make no causal claim.}
+
 %-----------------------------------------------------------------------
 \section{Statistical inferences}
 
@@ -344,21 +354,28 @@ never appear in the exploration set, cleaned with the saved rules. E-3 vs H-1B f
 (H-1B1 is 0.4\% and a separate program). Wage tests use FY2017--18 and FY2020--22 (FY2019 has no
 prevailing wage) and rows with a cleaned wage and known worksite.}
 
-\field{Common design, fixed before the data was opened:}{each test is the coefficient $\beta$ in
+\field{Common design, fixed before the held-out data was opened:}{each test is the coefficient
+$\beta$ in
 \[ y_i=\beta\,\mathrm{E3}_i+\alpha_{c(i)}+\varepsilon_i, \]
-where $\alpha_c$ is a fixed effect for the comparison cell (e.g.\ SOC $\times$ state $\times$
-year). Fixed effects compare E-3 and H-1B filings only inside the same cell; they are removed by
-demeaning within cells. Standard errors are \textbf{clustered by employer} (CR1) with a $t$
-reference on $G-1$ df ($G$ = employers): one employer's filings are near-copies, so they are not
-independent. Four tests, two-sided, family-wise $\alpha=0.05$ with \textbf{Holm} correction. With
-this many rows almost anything is significant, so each result is also judged by whether its 95\%
-CI clears the smallest meaningful difference (MID): \emph{meaningful} (CI beyond the MID),
-\emph{detectable, possibly too small} (CI overlaps it), \emph{negligible} (inside it, confirmed
-by TOST) or \emph{inconclusive}. Power at the MID, from exploration-set SEs scaled to the
-confirmation set's employer count ($\times1.99$) at Holm's strictest $\alpha=0.0125$: T1 1.00,
-T2 0.999, T3 0.16, T4 0.93.}
+where $\alpha_c$ is a separate intercept (\emph{fixed effect}) for each comparison cell, e.g.\
+SOC $\times$ state $\times$ year. Each choice has one reason:}
+\begin{itemize}[leftmargin=*,itemsep=1pt,topsep=1pt]
+  \item \textbf{Cell intercepts}: $\beta$ becomes the average E-3 minus H-1B gap \emph{inside}
+  cells, so differences in job, place and year can't create a gap.
+  \item \textbf{Standard errors clustered by employer}: one employer's filings are near-copies
+  (Section~2), so they aren't independent; treating them as independent makes the SE too small.
+  The independent units are employers, so the $t$-test uses employers $-\,1$ degrees of freedom.
+  \item \textbf{Holm correction}: four tests at 5\% each would give up to a 19\% chance of at least one
+  false alarm; Holm keeps it at 5\% overall.
+  \item \textbf{Smallest meaningful difference (MID)}: with this many rows even a trivial gap is
+  significant, so each result is also judged by its 95\% CI: \emph{meaningful} (whole CI beyond
+  the MID), \emph{possibly too small} (CI includes the MID) or \emph{negligible} (CI inside it).
+\end{itemize}
+Before the run we checked power, the chance of detecting a gap exactly the size of the MID:
+T1 1.00, T2 0.999, T3 0.16, T4 0.93.
 
 %------------------------------------------------------------ Test 1
+\newpage\mbox{}\newpage
 \subsection*{Test 1 (P1): do E-3 filings carry a different prevailing wage for the same job,
 state and year?}
 
@@ -376,7 +393,7 @@ Smallest difference that matters & 5\% ($|\beta|\ge\log1.05=0.049$) \\
 \end{tabularx}}
 
 $y$ = log annual prevailing wage, so $\beta$ is the E-3 minus H-1B difference in log points
-($\approx$\%). Two-sided, because choosing a direction after EDA would be data snooping. 5\%,
+($\approx$\%). Two-sided, because choosing a direction after EDA would be fitting the test to the data. 5\%,
 because it is about \$4{,}400 at the median wage, about one year of wage growth here, and half
 the gap between ``senior'' and other titles in the same job: a smaller gap wouldn't place a
 worker at a different wage level.
@@ -392,8 +409,7 @@ for 2{,}729 cells, and clustering by employer handles the dependence.
 \textbf{Also considered} & \textbf{Why we did not use it} \\
 \midrule
 Welch $t$-test on relative wage & treats filings as independent; its SE (0.0027) is 2.4$\times$ too small. Run as a check: $t=20.7$, same decision \\
-Mann--Whitney U & tests a shift in ranks, which can't be compared with a 5\% MID; also assumes independence. Run as a check: $p<10^{-100}$ \\
-Mixed model, employer random effects & assumes employer effects are unrelated to visa class, the very thing Test 2 questions \\
+Mann--Whitney U & tests a shift in ranks, which can't be compared with a 5\% MID; log wage is already symmetric, so ranks add nothing; also assumes independence \\
 Raw two-group comparison & mixes job, state and year composition into the gap \\
 \bottomrule
 \end{tabularx}}
@@ -407,7 +423,6 @@ Estimate & $+9.1\%$ ($\hat\beta=0.087$; raw gap $+9.6\%$) \\
 95\% confidence interval & $+7.7\%$ to $+10.5\%$ \\
 Test statistic (d.f.) & $t=13.66$ (19{,}298) \\
 p-value (Holm) & $3.0\times10^{-42}$ ($8.9\times10^{-42}$) \\
-Wild-cluster bootstrap p & $\le 0.0005$ (1{,}999 draws) \\
 Decision & reject $H_0$ \\
 Verdict & meaningful: the whole CI is above 5\% \\
 \bottomrule
@@ -456,9 +471,8 @@ leaves open; fixed effects do this without assuming anything about how employers
 \textbf{Also considered} & \textbf{Why we did not use it} \\
 \midrule
 Paired $t$-test & on cell means it weights a cell with 1 E-3 and 500 H-1B filings like a balanced one. Run as a check with one gap per employer (695, independent): $+5.3\%$, $t=6.59$, $p=9\times10^{-11}$ \\
-Wilcoxon signed-rank & tests the median employer gap, not a mean in \%. Run as a check: median $+1.5\%$, 55\% of employers file E-3 higher, $p=3\times10^{-12}$ \\
+Wilcoxon signed-rank & the rank version of the paired $t$; tests the median employer gap, not a mean in \%, so it would repeat the paired check \\
 Matching E-3 to H-1B filings & discards most H-1B filings for no gain in bias \\
-Mixed model & random effects assume away the employer confounding being tested \\
 \bottomrule
 \end{tabularx}}
 
@@ -471,16 +485,15 @@ Estimate & $+6.8\%$ ($\hat\beta=0.065$) \\
 95\% confidence interval & $+5.3\%$ to $+8.3\%$ \\
 Test statistic (d.f.) & $t=9.24$ (694) \\
 p-value (Holm) & $2.9\times10^{-19}$ ($5.8\times10^{-19}$) \\
-Wild-cluster bootstrap p & $\le 0.0005$ \\
 Decision & reject $H_0$ \\
 Verdict & meaningful: the whole CI is above 5\% \\
 \bottomrule
 \end{tabularx}}
 
 The same employer files its E-3 workers at a prevailing wage about 7\% higher than its H-1B
-workers in the same job, state and year. About 75\% of the Test~1 gap remains (comparing two
-populations, as Test~2 covers only employers filing both visas), so the premium is mostly
-\emph{how} employers file, not \emph{which} employers hire Australians.
+workers in the same job, state and year. That is about 75\% of the Test~1 gap, so the premium
+is mostly \emph{how} employers file, not \emph{which} employers hire Australians (Test~2 covers
+only employers filing both visas, so the two numbers come from different sets of employers).
 
 %------------------------------------------------------------ Test 3
 \needspace{18\baselineskip}
@@ -512,7 +525,7 @@ the MID, and its clustered SE needs no functional form.
 \toprule
 \textbf{Also considered} & \textbf{Why we did not use it} \\
 \midrule
-Cochran--Mantel--Haenszel test & the classic stratified 2$\times$2 test, but assumes independent filings. Run as a check: pooled OR 3.82, $p<10^{-100}$ \\
+Cochran--Mantel--Haenszel test & the classic stratified 2$\times$2 test, but assumes independent filings; the logit gives the same odds ratio with clustering \\
 Logistic regression & gives an odds ratio, not pp. Run as a check, same fixed effects and clustering: OR 3.80, $z=24.9$ \\
 $\chi^2$ test on the raw 2$\times$2 table & ignores the size confounder the question is about \\
 \bottomrule
@@ -527,7 +540,6 @@ Estimate & $+3.79$\,pp (E-3 5.32\%, H-1B 0.77\% raw; raw gap $+4.55$\,pp) \\
 95\% confidence interval & $+3.26$ to $+4.31$\,pp \\
 Test statistic (d.f.) & $t=14.12$ (32{,}955) \\
 p-value (Holm) & $4.0\times10^{-45}$ ($1.6\times10^{-44}$) \\
-Wild-cluster bootstrap p & $\le 0.0005$ \\
 Decision & reject $H_0$ \\
 Verdict & meaningful: the whole CI is above 0.5\,pp \\
 \bottomrule
@@ -535,10 +547,10 @@ Verdict & meaningful: the whole CI is above 0.5\,pp \\
 
 Among employers of the same size in the same year, E-3 filings are denied 3.8\,pp more often;
 employer size explains only 17\% of the raw gap: it shrinks the gap but doesn't reverse it, so
-there is no Simpson's paradox. The power check gave only 0.16 because it assumed an SE of
-0.33\,pp at $\alpha=0.0125$; the realised SE was 0.27\,pp (power 0.26 at that $\alpha$, 0.46 at
-0.05), and the effect is about eight times the MID, so low power doesn't limit this result.
-\emph{Exploratory, not pre-registered:}
+there is no Simpson's paradox. Planned power was low (0.16) because a gap of only 0.5\,pp is
+hard to see next to the noise, but the actual gap is about eight times that, so it was detected
+easily.
+\emph{Exploratory, not planned in advance:}
 the gap shrinks from $+6.6$\,pp in FY2018 to $+1.6$\,pp in FY2022 (Fig.~\ref{fig:year}).
 
 %------------------------------------------------------------ Test 4
@@ -567,10 +579,10 @@ its experience with the process and its form-filling practice, which size groups
 \toprule
 \textbf{Also considered} & \textbf{Why we did not use it} \\
 \midrule
-Conditional (fixed-effects) logit & planned as a check, but the exact likelihood failed on employer-years with thousands of filings. With one binary regressor its score test equals the CMH test by employer $\times$ year, which we ran instead: OR 1.89, $p=7.6\times10^{-6}$ \\
+CMH test by employer $\times$ year & the standard test for a 2$\times$2 gap within many groups, but gives an odds ratio, not pp. Run as a check: OR 1.89, $p=7.6\times10^{-6}$ \\
 Employer-level paired $t$ & one gap per employer (1{,}547), no regression. Run as a check: $+0.59$\,pp, $p=0.018$ \\
-Wilcoxon signed-rank & only 306 employers have a non-zero gap. Run as a check: $p=0.0005$ \\
-Logit with employer dummies & 1{,}547 employers' dummies give biased estimates when most employer-years have no denial (incidental-parameter problem) \\
+Wilcoxon signed-rank & only 306 of 1{,}547 employers have a non-zero gap, and it would repeat the paired $t$ \\
+Logistic regression with employer dummies & 1{,}547 dummies but most employer-years have no denial at all, so the odds ratios come out biased \\
 \bottomrule
 \end{tabularx}}
 
@@ -583,49 +595,48 @@ Estimate & $+0.51$\,pp (H-1B rate at these employers 0.30\%) \\
 95\% confidence interval & $+0.22$ to $+0.81$\,pp \\
 Test statistic (d.f.) & $t=3.44$ (1{,}546) \\
 p-value (Holm) & $5.9\times10^{-4}$ ($5.9\times10^{-4}$) \\
-Wild-cluster bootstrap p & $\le 0.0005$ \\
 Decision & reject $H_0$ \\
-Verdict & detectable, possibly too small: the CI straddles 0.5\,pp (TOST $p=0.54$) \\
+Verdict & possibly too small: the CI includes 0.5\,pp \\
 \bottomrule
 \end{tabularx}}
 
 Within the same employer the gap is real but small in absolute terms; we can't tell whether it
 reaches the 0.5\,pp that matters. Relative to these employers' low H-1B rate (0.30\%) it is about
-2.7$\times$. Across the two populations, 86\% of the Test~3 gap disappears when the employer is
-held fixed: most of the E-3 denial gap is \emph{between} employers.
+2.7$\times$. Holding the employer fixed removes 86\% of the Test~3 gap, so most of the E-3 denial
+gap comes from \emph{which} employers file E-3, not from how one employer's filings fare.
 
 %------------------------------------------------------------ comparison
 \subsection*{Main tests against other families of tests}
-All four main tests are the same fixed-effects regression, so we compare each with tests from
-other families. The employer-level checks for Tests 2 and 4 were added after the pre-registered run.
+All four main tests are the same regression, so we check each with tests from other families.
+The \emph{bootstrap} simulates 1{,}999 datasets in which E-3 has no effect, changing whole
+employers at a time, and counts how often their $t$ is as large as ours: a $p$-value that doesn't
+rely on the $t$ table. We keep one check per family; rank tests were dropped because they
+repeat the $t$-based checks. The employer-level checks for Tests 2 and 4 were added after the
+planned run.
 {\footnotesize
 \begin{tabularx}{\linewidth}{@{}L{0.5cm} L{3.3cm} Y L{0.8cm}@{}}
 \toprule
 \textbf{Test} & \textbf{Method (family)} & \textbf{Result} & \textbf{Agrees} \\
 \midrule
 T1 & FE regression, clustered $t$ (main) & $+9.1\%$, $p=3\times10^{-42}$ & -- \\
-   & wild-cluster bootstrap (resampling) & $p\le0.0005$ & yes \\
+   & bootstrap over employers (resampling) & $p\le0.0005$ & yes \\
    & Welch $t$ on relative wage (two-sample) & $+5.7\%$, $p=2\times10^{-93}$ & yes \\
-   & Mann--Whitney U (rank) & $p=10^{-155}$ & yes \\
    & without largest employer & $+9.2\%$, $p=4\times10^{-42}$ & yes \\
 \midrule
 T2 & FE regression (main) & $+6.8\%$, $p=3\times10^{-19}$ & -- \\
-   & wild-cluster bootstrap (resampling) & $p\le0.0005$ & yes \\
+   & bootstrap over employers (resampling) & $p\le0.0005$ & yes \\
    & paired $t$, one gap per employer & $+5.3\%$, $p=9\times10^{-11}$ & yes \\
-   & Wilcoxon signed-rank (rank) & median $+1.5\%$, $p=3\times10^{-12}$ & yes \\
    & without largest employer & $+6.7\%$, $p=10^{-17}$ & yes \\
 \midrule
 T3 & FE linear probability (main) & $+3.79$\,pp, $p=4\times10^{-45}$ & -- \\
-   & wild-cluster bootstrap (resampling) & $p\le0.0005$ & yes \\
-   & CMH by size $\times$ year (contingency) & OR 3.82, $p<10^{-100}$ & yes \\
+   & bootstrap over employers (resampling) & $p\le0.0005$ & yes \\
    & logit, same FE, clustered (GLM) & OR 3.80, $p=3\times10^{-137}$ & yes \\
    & without largest employer & $+3.82$\,pp, $p=2\times10^{-45}$ & yes \\
 \midrule
 T4 & FE linear probability (main) & $+0.51$\,pp, $p=6\times10^{-4}$ & -- \\
-   & wild-cluster bootstrap (resampling) & $p\le0.0005$ & yes \\
-   & CMH by employer $\times$ year (= conditional logit) & OR 1.89, $p=8\times10^{-6}$ & yes \\
+   & bootstrap over employers (resampling) & $p\le0.0005$ & yes \\
+   & CMH by employer $\times$ year (contingency) & OR 1.89, $p=8\times10^{-6}$ & yes \\
    & paired $t$, one gap per employer & $+0.59$\,pp, $p=0.018$ & yes \\
-   & Wilcoxon signed-rank (rank) & $p=0.0005$ & yes \\
    & without largest employer & $+0.51$\,pp, $p=9\times10^{-4}$ & yes \\
 \bottomrule
 \end{tabularx}}
@@ -639,8 +650,7 @@ paired $t$ ($p=0.018$) is the weakest result, matching its ``possibly too small'
 %-----------------------------------------------------------------------
 \section{Limitations}
 \begin{itemize}
-  \item \textbf{Association, not cause.} Australians may simply be hired into more senior roles;
-  worker experience and education aren't in the data. We show that filings differ, not that the
+  \item \textbf{Association, not cause} (Section~4): we show that filings differ, not that the
   visa causes it.
   \item \textbf{Prevailing wage, not wage paid.} It is the legal minimum, and the wage-level
   column was cut from this extract; relative wage is an indirect proxy (Fig.~\ref{fig:senior}).
@@ -653,7 +663,8 @@ paired $t$ ($p=0.018$) is the weakest result, matching its ``possibly too small'
   \item \textbf{Tests 2 and 4 cover only employers filing both visas}, which are larger than average.
   \item \textbf{Denial here is DOL's check of the form}, not the visa decision, which USCIS makes later.
   \item \textbf{Exploratory extras.} The year-by-year results and the employer-level checks of
-  Tests 2 and 4 were not pre-registered and are not Holm-corrected.
+  Tests 2 and 4 were not planned in advance and are not Holm-corrected. The full test plan, and what changed
+  in it, is in \code{report/preregistration.md}.
 \end{itemize}
 
 \end{document}

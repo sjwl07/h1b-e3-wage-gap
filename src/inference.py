@@ -1,4 +1,4 @@
-"""Step 7: run the pre-registered tests (report/preregistration.md) on the confirmation set.
+"""Step 7: run the planned tests (report/preregistration.md) on the confirmation set.
 
 The confirmation set is cleaned with the exploration-fitted parameters (nothing
 re-fitted), then each test runs once. Populations and models come from
@@ -33,28 +33,22 @@ def ci(r, level=0.95):
     return r["beta"] - q * r["se"], r["beta"] + q * r["se"]
 
 
-def tost_p(r, mid):
-    """Two one-sided tests of |beta| < mid; p = max of the two one-sided p-values."""
-    p_lo = stats.t.sf((r["beta"] + mid) / r["se"], r["df"])
-    p_hi = stats.t.cdf((r["beta"] - mid) / r["se"], r["df"])
-    return float(max(p_lo, p_hi))
+def classify(reject, lo, hi, mid):
+    """Verdict from the 95% CI against the smallest meaningful difference (MID)."""
+    if lo > mid or hi < -mid:
+        return "meaningful"
+    if -mid < lo and hi < mid:
+        return "negligible"
+    return "possibly too small" if reject else "inconclusive"
 
 
-def classify(reject, lo, hi, mid, p_tost, alpha):
-    if reject:
-        return "meaningful" if (lo > mid or hi < -mid) else "detectable, possibly too small"
-    if -mid < lo and hi < mid and p_tost < alpha:
-        return "practically negligible"
-    return "inconclusive"
+def bootstrap_p(r, n_boot=N_BOOT, seed=SEED):
+    """Bootstrap p-value that doesn't rely on the t table.
 
-
-def wild_cluster_p(r, n_boot=N_BOOT, seed=SEED):
-    """Restricted (H0: beta = 0) wild-cluster bootstrap-t, Rademacher weights.
-
-    With one regressor after demeaning, everything reduces to per-cluster sums:
-    S_g = sum x~ y~, Q_g = sum x~^2. Under H0 the restricted residual is y~ itself,
-    so y* = w_g y~, beta* = sum_g w_g S_g / sxx, and the bootstrap score of cluster g
-    is w_g S_g - beta* Q_g."""
+    Each draw builds a dataset where E-3 has no effect (y with beta = 0) and flips the
+    sign of each employer's contribution at random (+1 or -1), so one employer's
+    filings always move together. The p-value is the share of draws whose t is at
+    least as large as the real one. Per employer: S_g = sum x~ y~, Q_g = sum x~^2."""
     g = r["_g"]
     S = pd.Series(r["_xt"] * r["_yt"]).groupby(g).sum().to_numpy()
     Q = pd.Series(r["_xt"] ** 2).groupby(g).sum().to_numpy()
@@ -83,18 +77,14 @@ def fmt_effect(x, unit):
 # ---------- robustness checks ----------
 
 def naive_checks(pop, t):
-    """Two-sample tests on the median-based relative PW used in EDA (treat filings as independent)."""
+    """T1: Welch two-sample t-test on the median-based relative PW used in EDA (treats filings as independent)."""
     rel = relative_pw(pop)
     a, b = rel[pop["e3"] == 1].dropna(), rel[pop["e3"] == 0].dropna()
     w = stats.ttest_ind(a, b, equal_var=False)
-    mw = stats.mannwhitneyu(a, b, alternative="two-sided")
     return {
         "naive Welch t on relative PW (ignores clustering)": {
             "diff": float(a.mean() - b.mean()), "t": float(w.statistic), "p": float(w.pvalue),
             "naive SE": float(np.sqrt(a.var() / len(a) + b.var() / len(b)))},
-        "naive Mann-Whitney U on relative PW": {
-            "median E-3": float(a.median()), "median H-1B": float(b.median()), "U": float(mw.statistic),
-            "p": float(mw.pvalue)},
     }
 
 
@@ -128,8 +118,8 @@ def cmh(pop, cells):
 
 
 def size_checks(pop, t):
-    """T3: CMH and a logit with the same size x year fixed effects."""
-    out = {"Cochran-Mantel-Haenszel by size x year (ignores clustering)": cmh(pop, t["cells"])}
+    """T3: a logit with the same size x year fixed effects."""
+    out = {}
     # logistic regression with the same cell fixed effects, employer-clustered;
     # fit on rows aggregated to employer x cell x visa (binomial counts) to keep it small
     agg = (pop.groupby(["employer_key"] + t["cells"] + ["e3"], observed=True)["denied"]
@@ -147,34 +137,28 @@ def size_checks(pop, t):
 
 
 def employer_paired(pop, t):
-    """T2, T4 (added after the pre-registered run): one gap per employer, the average of its within-cell
+    """T2, T4 (added after the planned run): one gap per employer, the average of its within-cell
     E-3 minus H-1B mean differences, so employers are the independent units. Then a one-sample t-test
-    and a Wilcoxon signed-rank test (zero gaps dropped) on those gaps: no regression, no clustering."""
+    on those gaps: no regression, no clustering."""
     d = pop[informative(pop, "e3", t["cells"])]
     m = d.groupby(t["cells"] + ["e3"], observed=True)[t["y"]].mean().unstack("e3")
     gap = (m[1] - m[0]).groupby(level="employer_key").mean()
     tt = stats.ttest_1samp(gap, 0)
-    w = stats.wilcoxon(gap)
     return {
         "employer-level paired t (one gap per employer)": {
-            "mean gap": float(gap.mean()), "t": float(tt.statistic), "df": len(gap) - 1, "p": float(tt.pvalue)},
-        "Wilcoxon signed-rank on employer gaps": {
-            "median gap": float(gap.median()), "W": float(w.statistic), "p": float(w.pvalue),
-            "employers": len(gap), "non-zero gaps": int((gap != 0).sum()),
-            "share of employers with E-3 higher": float((gap > 0).mean())},
+            "mean gap": float(gap.mean()), "t": float(tt.statistic), "df": len(gap) - 1, "p": float(tt.pvalue),
+            "employers": len(gap), "share of employers with E-3 higher": float((gap > 0).mean())},
     }
 
 
 def employer_checks(pop, t):
-    """T4: with one binary regressor, the CMH test stratified by employer x year is the score test of the
-    conditional (fixed-effects) logit; statsmodels' exact conditional logit recurses once per row and
-    fails on employer-years with thousands of filings."""
+    """T4: CMH test stratified by employer x year, plus the employer-level paired tests."""
     d = pop[informative(pop, "e3", t["cells"])]
-    return {"CMH by employer x year (= conditional-logit score test; ignores clustering)": cmh(d, t["cells"]),
+    return {"Cochran-Mantel-Haenszel by employer x year (ignores clustering)": cmh(d, t["cells"]),
             **employer_paired(pop, t)}
 
 
-# T2 shares T1's population, so the naive two-sample checks would only repeat T1's
+# T2 shares T1's population, so the Welch check would only repeat T1's
 EXTRA_CHECKS = {"T1": naive_checks, "T2": employer_paired, "T3": size_checks, "T4": employer_checks}
 
 
@@ -241,7 +225,7 @@ def main():
     for name, t in TESTS.items():
         pop = t["pop"](d)
         r = fe_ols(pop, t["y"], "e3", t["cells"], "employer_key")
-        r["wild_p"] = wild_cluster_p(r)
+        r["boot_p"] = bootstrap_p(r)
         raw_gap = pop.loc[pop["e3"] == 1, t["y"]].mean() - pop.loc[pop["e3"] == 0, t["y"]].mean()
         used = pop[informative(pop, "e3", t["cells"])]
         results[name] = {**public(r), "label": t["label"], "mid": t["mid"], "unit": t["unit"],
@@ -253,20 +237,19 @@ def main():
         checks[name] = {**(extra(pop, t) if extra else {}), **without_largest(pop, t)}
         if name in ("T1", "T3"):
             years[name] = by_year(pop, t)
-        print(name, {k: v for k, v in results[name].items() if k in ("beta", "se", "t", "df", "p", "wild_p")})
+        print(name, {k: v for k, v in results[name].items() if k in ("beta", "se", "t", "df", "p", "boot_p")})
 
     names = list(TESTS)
     reject, p_holm, _, _ = multipletests([results[n]["p"] for n in names], alpha=ALPHA_FAMILY, method="holm")
     for n, rej, ph in zip(names, reject, p_holm):
         r = results[n]
         lo, hi = ci(r)
-        r.update({"p_holm": float(ph), "holm_reject": bool(rej), "ci95": [float(lo), float(hi)],
-                  "p_tost": tost_p(r, r["mid"])})
-        r["verdict"] = classify(rej, lo, hi, r["mid"], r["p_tost"], ALPHA_FAMILY)
+        r.update({"p_holm": float(ph), "holm_reject": bool(rej), "ci95": [float(lo), float(hi)]})
+        r["verdict"] = classify(rej, lo, hi, r["mid"])
 
     figures(results, years)
     out = {"results": results, "robustness": checks, "by_year": years,
-           "n_confirm_rows": int(len(d)), "wild_bootstrap_draws": N_BOOT, "seed": SEED}
+           "n_confirm_rows": int(len(d)), "bootstrap_draws": N_BOOT, "seed": SEED}
     (REPORT / "inference_results.json").write_text(json.dumps(out, indent=1, default=float))
     write_md(results, checks, years, clog)
 
@@ -277,7 +260,7 @@ def interpretation(results, checks, years):
     naive = checks["T1"]["naive Welch t on relative PW (ignores clustering)"]
     y1 = [pc(v["beta"]) for v in years["T1"].values()]
     y3 = years["T3"]
-    cmh4 = checks["T4"]["CMH by employer x year (= conditional-logit score test; ignores clustering)"]
+    cmh4 = checks["T4"]["Cochran-Mantel-Haenszel by employer x year (ignores clustering)"]
     logit3 = checks["T3"]["logit with size x year FE, employer-clustered"]
     e3_rate4 = r4["mean_y_h1b_used"] + r4["beta"]
     return [
@@ -291,11 +274,11 @@ def interpretation(results, checks, years):
         f"- T2: within the same employer, job, state and year the gap is {pc(r2['beta']):+.1f}% "
         f"[{pc(r2['ci95'][0]):+.1f}, {pc(r2['ci95'][1]):+.1f}], still entirely above the MID. "
         f"About {100 * r2['beta'] / r1['beta']:.0f}% of the T1 gap (in log points) remains when the employer is "
-        "held fixed (T2 uses only employers filing both visas for the same job, so this compares two populations "
-        "rather than splitting one gap exactly), so it isn't mainly that higher-paying employers hire Australians: the same employer files "
+        "held fixed (T2 uses only employers filing both visas for the same job, so the two numbers come from "
+        "different sets of employers), so it isn't mainly that higher-paying employers hire Australians: the same employer files "
         "its E-3 workers at a higher wage level.",
         f"- Stable across years ({min(y1):+.1f}% to {max(y1):+.1f}%, Fig. 14), unchanged without the largest "
-        f"employer, and the wild-cluster bootstrap agrees (p ≤ 1/{N_BOOT + 1}).",
+        f"employer, and the bootstrap agrees (p ≤ 1/{N_BOOT + 1}).",
         f"- Clustering matters: treating filings as independent gives an SE of {naive['naive SE']:.4f}, against "
         f"{r1['se']:.4f} clustered by employer ({r1['se'] / naive['naive SE']:.1f}× larger).",
         "",
@@ -314,7 +297,7 @@ def interpretation(results, checks, years):
         f"rate is {100 * r4['mean_y_h1b_used']:.2f}%, so E-3 is about {e3_rate4 / r4['mean_y_h1b_used']:.1f}× that "
         f"(CMH odds ratio {cmh4['pooled MH odds ratio']:.2f}).",
         f"- So most of the E-3 denial gap is **between** employers: {100 * (1 - r4['beta'] / r3['beta']):.0f}% of "
-        "the T3 gap disappears when the employer is fixed (again across different populations: T4 covers only "
+        "the T3 gap disappears when the employer is fixed (again from different sets of employers: T4 covers only "
         "employers filing both visas in a year). E-3 filings come disproportionately from employers "
         "that get denied often, beyond what their size predicts.",
         "",
@@ -336,9 +319,8 @@ def write_md(results, checks, years, clog):
             "estimate": fmt_effect(r["beta"], u),
             "95% CI": f"[{fmt_effect(r['ci95'][0], u)}, {fmt_effect(r['ci95'][1], u)}]",
             "t (df)": f"{r['t']:.2f} ({r['df']:,})",
-            "p": f"{r['p']:.2e}", "p Holm": f"{r['p_holm']:.2e}", "p wild bootstrap": f"{r['wild_p']:.4f}" if r["wild_p"] > 1.5 / (N_BOOT + 1) else f"≤ 1/{N_BOOT + 1}",
+            "p": f"{r['p']:.2e}", "p Holm": f"{r['p_holm']:.2e}", "p bootstrap": f"{r['boot_p']:.4f}" if r["boot_p"] > 1.5 / (N_BOOT + 1) else f"≤ 1/{N_BOOT + 1}",
             "Holm decision": "reject H₀" if r["holm_reject"] else "fail to reject H₀",
-            "p TOST": f"{r['p_tost']:.3f}",
             "MID": fmt_effect(r["mid"], u).lstrip("+"),
             "verdict": r["verdict"],
         })
@@ -369,10 +351,10 @@ def write_md(results, checks, years, clog):
     md = [
         "# Hypothesis test results (confirmation set)",
         "",
-        f"Pre-registered in `report/preregistration.md`; each test run once. Confirmation set cleaned with the "
+        f"Planned in `report/preregistration.md`; each test run once. Confirmation set cleaned with the "
         f"exploration-fitted rules (`report/cleaning_log_confirm.md`): {clog['rows'].iloc[-1]:,} filings, no rows "
-        f"removed. Family-wise α = {ALPHA_FAMILY} (Holm, 4 tests), two-sided, employer-clustered SEs with "
-        f"t(G − 1) reference. Wild-cluster bootstrap: restricted, Rademacher, {N_BOOT:,} draws.",
+        f"removed. Family-wise α = {ALPHA_FAMILY} (Holm, 4 tests), two-sided, SEs clustered by employer, "
+        f"t-test with employers − 1 degrees of freedom. Bootstrap over employers: {N_BOOT:,} draws.",
         "",
         tab.to_markdown(index=False),
         "",

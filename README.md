@@ -24,7 +24,7 @@ Run from `h1-b/`:
 | 3. Data dictionary | `.venv/bin/python src/data_dictionary.py` | `report/data_dictionary.md` |
 | 4. Cleaning | `.venv/bin/python src/clean.py` | `data/processed/explore_clean.parquet`, `data/processed/clean_params.json`, `report/cleaning_log.md` |
 | 5. EDA | `.venv/bin/python src/eda.py` | `figures/fig01–fig12.png`, `figures/fig15_basic_questions.png`, `report/eda.md` |
-| 6. Problem statements & pre-registration | `.venv/bin/python src/power.py` | `report/problem_statements.md`, `report/preregistration.md`, `report/power.md` (tests defined in `src/tests_spec.py`, model in `src/fe.py`) |
+| 6. Problem statements, test plan & power | `.venv/bin/python src/power.py` | `report/problem_statements.md`, `report/preregistration.md`, `report/power.md` (tests defined in `src/tests_spec.py`, model in `src/fe.py`) |
 | 7. Hypothesis tests (confirmation set) | `.venv/bin/python src/inference.py` | `report/inference_results.{md,json}`, `report/cleaning_log_confirm.md`, `data/processed/confirm_clean.parquet`, `figures/fig13–fig14.png` |
 
 **What `load.py` harmonizes:**
@@ -45,4 +45,4 @@ Run from `h1-b/`:
 ```bash
 cd report/latex && pdflatex report.tex && pdflatex report.tex
 ```
-Figures are read from `figures/`. Names, roll numbers, emails, group name and the GitHub link are red placeholders.
+Figures are read from `figures/`.

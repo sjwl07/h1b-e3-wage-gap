@@ -1,14 +1,12 @@
-"""One-regressor fixed-effects OLS with employer-clustered SEs, for millions of rows.
+"""Regression y = beta * x + cell intercept + error, with SEs clustered by employer.
 
-y = beta * x + cell fixed effect + error. The fixed effects are removed by
-demeaning y and x within each cell (Frisch-Waugh-Lovell), so no dummy matrix is
-built. Cluster-robust variance (CR1):
+Subtracting each cell's mean from y and x removes the cell intercepts, so beta is
+the E-3 vs H-1B gap inside cells and no dummy columns are built for millions of rows.
+Clustered variance, with G employers:
 
     V = G/(G-1) * sum_g (sum_{i in g} x~_i e_i)^2 / (sum_i x~_i^2)^2
 
-with a t reference on G-1 df. The fixed-effect cells here are nested within
-or much smaller than employers, so the usual G/(G-1) correction is used
-without an extra (N-1)/(N-K) term (as in Stata's reghdfe for nested FE).
+Employers are the independent units, so the t-test uses G-1 degrees of freedom.
 """
 import numpy as np
 import pandas as pd

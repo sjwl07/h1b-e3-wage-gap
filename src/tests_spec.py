@@ -1,4 +1,4 @@
-"""The four pre-registered tests, defined once and shared by power.py and inference.py,
+"""The four planned tests, defined once and shared by power.py and inference.py,
 so the power check and the confirmatory run use exactly the same populations and models.
 The comparison cell and employer-size bins are also used by eda.py."""
 import numpy as np
