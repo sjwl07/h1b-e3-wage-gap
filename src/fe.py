@@ -37,9 +37,4 @@ def fe_ols(df, y, x, cells, cluster):
     p = float(2 * stats.t.sf(abs(t), G - 1))
     return {"beta": beta, "se": se, "t": t, "df": G - 1, "p": p, "n": len(d), "clusters": G,
             "n_cells": int(d.groupby(cells, observed=True).ngroups),
-            "n_treated": int((d[x] == 1).sum()), "clusters_treated": int(d.loc[d[x] == 1, cluster].nunique()),
-            "_xt": xt, "_e": e, "_yt": yt, "_g": d[cluster].to_numpy(), "_sxx": sxx}
-
-
-def public(r):
-    return {k: v for k, v in r.items() if not k.startswith("_")}
+            "n_treated": int((d[x] == 1).sum()), "clusters_treated": int(d.loc[d[x] == 1, cluster].nunique())}

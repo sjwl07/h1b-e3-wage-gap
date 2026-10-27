@@ -11,7 +11,6 @@
    "n_cells": 2729,
    "n_treated": 10433,
    "clusters_treated": 3085,
-   "boot_p": 0.0005,
    "label": "E-3 vs H-1B prevailing wage, same SOC \u00d7 state \u00d7 year",
    "mid": 0.04879016416943205,
    "unit": "log",
@@ -38,7 +37,6 @@
    "n_cells": 1906,
    "n_treated": 3356,
    "clusters_treated": 695,
-   "boot_p": 0.0005,
    "label": "E-3 vs H-1B prevailing wage, same employer \u00d7 SOC \u00d7 state \u00d7 year",
    "mid": 0.04879016416943205,
    "unit": "log",
@@ -65,7 +63,6 @@
    "n_cells": 30,
    "n_treated": 14587,
    "clusters_treated": 3802,
-   "boot_p": 0.0005,
    "label": "E-3 vs H-1B denial rate, same employer-size bin \u00d7 year",
    "mid": 0.005,
    "unit": "pp",
@@ -92,7 +89,6 @@
    "n_cells": 3052,
    "n_treated": 8003,
    "clusters_treated": 1547,
-   "boot_p": 0.0005,
    "label": "E-3 vs H-1B denial rate, same employer \u00d7 year",
    "mid": 0.005,
    "unit": "pp",
@@ -116,11 +112,6 @@
     "t": 20.704792843026173,
     "p": 2.267988418541773e-93,
     "naive SE": 0.002683487910055516
-   },
-   "without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US)": {
-    "beta": 0.08792962866635325,
-    "se": 0.006447023161542918,
-    "p": 3.6960320078551404e-42
    }
   },
   "T2": {
@@ -131,11 +122,6 @@
     "p": 8.706104991109125e-11,
     "employers": 695,
     "share of employers with E-3 higher": 0.5525179856115108
-   },
-   "without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US)": {
-    "beta": 0.06503935725470716,
-    "se": 0.007408159053998661,
-    "p": 1.2749903128343865e-17
    }
   },
   "T3": {
@@ -143,11 +129,6 @@
     "OR": 3.795391883198681,
     "z": 24.94249914248524,
     "p": 2.5755433786167407e-137
-   },
-   "without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US)": {
-    "beta": 0.03824123870951041,
-    "se": 0.0026990549638790016,
-    "p": 1.9554131766275894e-45
    }
   },
   "T4": {
@@ -164,11 +145,6 @@
     "p": 0.01777933340621351,
     "employers": 1547,
     "share of employers with E-3 higher": 0.049773755656108594
-   },
-   "without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US)": {
-    "beta": 0.005124061738197574,
-    "se": 0.0015375966848001083,
-    "p": 0.000880987094855031
    }
   }
  },
@@ -244,7 +220,5 @@
    }
   }
  },
- "n_confirm_rows": 791227,
- "bootstrap_draws": 1999,
- "seed": 42
+ "n_confirm_rows": 791227
 }

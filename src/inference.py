@@ -18,13 +18,9 @@ from statsmodels.stats.contingency_tables import StratifiedTable
 from statsmodels.stats.multitest import multipletests
 
 from clean import clean
-from config import CONFIRM_PATH, DATA_PROCESSED, FIGURES, REPORT, SEED
-from fe import fe_ols, informative, public
+from config import CONFIRM_PATH, DATA_PROCESSED, FIGURES, REPORT
+from fe import fe_ols, informative
 from tests_spec import ALPHA_FAMILY, TESTS, prepare, relative_pw
-
-N_BOOT = 1999
-BOOT_BATCH = 100
-
 
 # ---------- inference helpers ----------
 
@@ -40,29 +36,6 @@ def classify(reject, lo, hi, mid):
     if -mid < lo and hi < mid:
         return "negligible"
     return "possibly too small" if reject else "inconclusive"
-
-
-def bootstrap_p(r, n_boot=N_BOOT, seed=SEED):
-    """Bootstrap p-value that doesn't rely on the t table.
-
-    Each draw builds a dataset where E-3 has no effect (y with beta = 0) and flips the
-    sign of each employer's contribution at random (+1 or -1), so one employer's
-    filings always move together. The p-value is the share of draws whose t is at
-    least as large as the real one. Per employer: S_g = sum x~ y~, Q_g = sum x~^2."""
-    g = r["_g"]
-    S = pd.Series(r["_xt"] * r["_yt"]).groupby(g).sum().to_numpy()
-    Q = pd.Series(r["_xt"] ** 2).groupby(g).sum().to_numpy()
-    G, sxx = len(S), r["_sxx"]
-    rng = np.random.default_rng(seed)
-    t_star = []
-    for start in range(0, n_boot, BOOT_BATCH):
-        w = rng.choice([-1.0, 1.0], size=(min(BOOT_BATCH, n_boot - start), G))
-        b = (w * S).sum(1) / sxx
-        score = w * S - b[:, None] * Q
-        se = np.sqrt(G / (G - 1) * (score ** 2).sum(1)) / sxx
-        t_star.append(b / se)
-    t_star = np.concatenate(t_star)
-    return float((1 + (np.abs(t_star) >= abs(r["t"])).sum()) / (n_boot + 1))
 
 
 def to_pct(x, unit):
@@ -86,12 +59,6 @@ def naive_checks(pop, t):
             "diff": float(a.mean() - b.mean()), "t": float(w.statistic), "p": float(w.pvalue),
             "naive SE": float(np.sqrt(a.var() / len(a) + b.var() / len(b)))},
     }
-
-
-def without_largest(pop, t):
-    top = pop["employer_key"].value_counts().index[0]
-    r = fe_ols(pop[pop["employer_key"] != top], t["y"], "e3", t["cells"], "employer_key")
-    return {f"without largest employer ({top})": {"beta": r["beta"], "se": r["se"], "p": r["p"]}}
 
 
 def by_year(pop, t):
@@ -225,19 +192,19 @@ def main():
     for name, t in TESTS.items():
         pop = t["pop"](d)
         r = fe_ols(pop, t["y"], "e3", t["cells"], "employer_key")
-        r["boot_p"] = bootstrap_p(r)
         raw_gap = pop.loc[pop["e3"] == 1, t["y"]].mean() - pop.loc[pop["e3"] == 0, t["y"]].mean()
         used = pop[informative(pop, "e3", t["cells"])]
-        results[name] = {**public(r), "label": t["label"], "mid": t["mid"], "unit": t["unit"],
+        results[name] = {**r, "label": t["label"], "mid": t["mid"], "unit": t["unit"],
                          "raw_gap_no_fe": float(raw_gap),
                          "mean_y_h1b": float(pop.loc[pop["e3"] == 0, t["y"]].mean()),
                          "mean_y_e3": float(pop.loc[pop["e3"] == 1, t["y"]].mean()),
                          "mean_y_h1b_used": float(used.loc[used["e3"] == 0, t["y"]].mean())}
         extra = EXTRA_CHECKS.get(name)
-        checks[name] = {**(extra(pop, t) if extra else {}), **without_largest(pop, t)}
+        if extra:
+            checks[name] = extra(pop, t)
         if name in ("T1", "T3"):
             years[name] = by_year(pop, t)
-        print(name, {k: v for k, v in results[name].items() if k in ("beta", "se", "t", "df", "p", "boot_p")})
+        print(name, {k: v for k, v in results[name].items() if k in ("beta", "se", "t", "df", "p")})
 
     names = list(TESTS)
     reject, p_holm, _, _ = multipletests([results[n]["p"] for n in names], alpha=ALPHA_FAMILY, method="holm")
@@ -249,7 +216,7 @@ def main():
 
     figures(results, years)
     out = {"results": results, "robustness": checks, "by_year": years,
-           "n_confirm_rows": int(len(d)), "bootstrap_draws": N_BOOT, "seed": SEED}
+           "n_confirm_rows": int(len(d))}
     (REPORT / "inference_results.json").write_text(json.dumps(out, indent=1, default=float))
     write_md(results, checks, years, clog)
 
@@ -277,8 +244,7 @@ def interpretation(results, checks, years):
         "held fixed (T2 uses only employers filing both visas for the same job, so the two numbers come from "
         "different sets of employers), so it isn't mainly that higher-paying employers hire Australians: the same employer files "
         "its E-3 workers at a higher wage level.",
-        f"- Stable across years ({min(y1):+.1f}% to {max(y1):+.1f}%, Fig. 14), unchanged without the largest "
-        f"employer, and the bootstrap agrees (p ≤ 1/{N_BOOT + 1}).",
+        f"- Stable across years ({min(y1):+.1f}% to {max(y1):+.1f}%, Fig. 14).",
         f"- Clustering matters: treating filings as independent gives an SE of {naive['naive SE']:.4f}, against "
         f"{r1['se']:.4f} clustered by employer ({r1['se'] / naive['naive SE']:.1f}× larger).",
         "",
@@ -319,7 +285,7 @@ def write_md(results, checks, years, clog):
             "estimate": fmt_effect(r["beta"], u),
             "95% CI": f"[{fmt_effect(r['ci95'][0], u)}, {fmt_effect(r['ci95'][1], u)}]",
             "t (df)": f"{r['t']:.2f} ({r['df']:,})",
-            "p": f"{r['p']:.2e}", "p Holm": f"{r['p_holm']:.2e}", "p bootstrap": f"{r['boot_p']:.4f}" if r["boot_p"] > 1.5 / (N_BOOT + 1) else f"≤ 1/{N_BOOT + 1}",
+            "p": f"{r['p']:.2e}", "p Holm": f"{r['p_holm']:.2e}",
             "Holm decision": "reject H₀" if r["holm_reject"] else "fail to reject H₀",
             "MID": fmt_effect(r["mid"], u).lstrip("+"),
             "verdict": r["verdict"],
@@ -354,7 +320,7 @@ def write_md(results, checks, years, clog):
         f"Planned in `report/preregistration.md`; each test run once. Confirmation set cleaned with the "
         f"exploration-fitted rules (`report/cleaning_log_confirm.md`): {clog['rows'].iloc[-1]:,} filings, no rows "
         f"removed. Family-wise α = {ALPHA_FAMILY} (Holm, 4 tests), two-sided, SEs clustered by employer, "
-        f"t-test with employers − 1 degrees of freedom. Bootstrap over employers: {N_BOOT:,} draws.",
+        f"t-test with employers − 1 degrees of freedom.",
         "",
         tab.to_markdown(index=False),
         "",

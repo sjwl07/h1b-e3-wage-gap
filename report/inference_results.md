@@ -1,13 +1,13 @@
 # Hypothesis test results (confirmation set)
 
-Planned in `report/preregistration.md`; each test run once. Confirmation set cleaned with the exploration-fitted rules (`report/cleaning_log_confirm.md`): 794,670 filings, no rows removed. Family-wise α = 0.05 (Holm, 4 tests), two-sided, SEs clustered by employer, t-test with employers − 1 degrees of freedom. Bootstrap over employers: 1,999 draws.
+Planned in `report/preregistration.md`; each test run once. Confirmation set cleaned with the exploration-fitted rules (`report/cleaning_log_confirm.md`): 794,670 filings, no rows removed. Family-wise α = 0.05 (Holm, 4 tests), two-sided, SEs clustered by employer, t-test with employers − 1 degrees of freedom.
 
-| test   | comparison                                                      | rows / E-3 rows   |   employers (G) | estimate   | 95% CI                 | t (df)         |        p |   p Holm | p bootstrap   | Holm decision   | MID      | verdict            |
-|:-------|:----------------------------------------------------------------|:------------------|----------------:|:-----------|:-----------------------|:---------------|---------:|---------:|:--------------|:----------------|:---------|:-------------------|
-| T1     | E-3 vs H-1B prevailing wage, same SOC × state × year            | 408,671 / 10,433  |          19,299 | +9.09%     | [+7.74%, +10.46%]      | 13.66 (19,298) | 2.95e-42 | 8.85e-42 | ≤ 1/2000      | reject H₀       | 5.00%    | meaningful         |
-| T2     | E-3 vs H-1B prevailing wage, same employer × SOC × state × year | 71,060 / 3,356    |             695 | +6.76%     | [+5.29%, +8.26%]       | 9.24 (694)     | 2.91e-19 | 5.82e-19 | ≤ 1/2000      | reject H₀       | 5.00%    | meaningful         |
-| T3     | E-3 vs H-1B denial rate, same employer-size bin × year          | 791,227 / 14,587  |          32,956 | +3.789 pp  | [+3.263 pp, +4.315 pp] | 14.12 (32,955) | 4.02e-45 | 1.61e-44 | ≤ 1/2000      | reject H₀       | 0.500 pp | meaningful         |
-| T4     | E-3 vs H-1B denial rate, same employer × year                   | 382,911 / 8,003   |           1,547 | +0.515 pp  | [+0.222 pp, +0.808 pp] | 3.44 (1,546)   | 0.000592 | 0.000592 | ≤ 1/2000      | reject H₀       | 0.500 pp | possibly too small |
+| test   | comparison                                                      | rows / E-3 rows   |   employers (G) | estimate   | 95% CI                 | t (df)         |        p |   p Holm | Holm decision   | MID      | verdict            |
+|:-------|:----------------------------------------------------------------|:------------------|----------------:|:-----------|:-----------------------|:---------------|---------:|---------:|:----------------|:---------|:-------------------|
+| T1     | E-3 vs H-1B prevailing wage, same SOC × state × year            | 408,671 / 10,433  |          19,299 | +9.09%     | [+7.74%, +10.46%]      | 13.66 (19,298) | 2.95e-42 | 8.85e-42 | reject H₀       | 5.00%    | meaningful         |
+| T2     | E-3 vs H-1B prevailing wage, same employer × SOC × state × year | 71,060 / 3,356    |             695 | +6.76%     | [+5.29%, +8.26%]       | 9.24 (694)     | 2.91e-19 | 5.82e-19 | reject H₀       | 5.00%    | meaningful         |
+| T3     | E-3 vs H-1B denial rate, same employer-size bin × year          | 791,227 / 14,587  |          32,956 | +3.789 pp  | [+3.263 pp, +4.315 pp] | 14.12 (32,955) | 4.02e-45 | 1.61e-44 | reject H₀       | 0.500 pp | meaningful         |
+| T4     | E-3 vs H-1B denial rate, same employer × year                   | 382,911 / 8,003   |           1,547 | +0.515 pp  | [+0.222 pp, +0.808 pp] | 3.44 (1,546)   | 0.000592 | 0.000592 | reject H₀       | 0.500 pp | possibly too small |
 
 ![estimates](../figures/fig13_inference_estimates.png)
 
@@ -25,7 +25,7 @@ Planned in `report/preregistration.md`; each test run once. Confirmation set cle
 **P1: E-3 filings carry a meaningfully higher prevailing wage, and most of it is within employer.**
 - T1: for the same SOC title, state and year, E-3 filings are +9.1% [+7.7, +10.5] above H-1B; the whole CI is above the 5% MID. The raw gap is +9.6%, so occupation, state and year mix explain almost none of it.
 - T2: within the same employer, job, state and year the gap is +6.8% [+5.3, +8.3], still entirely above the MID. About 75% of the T1 gap (in log points) remains when the employer is held fixed (T2 uses only employers filing both visas for the same job, so the two numbers come from different sets of employers), so it isn't mainly that higher-paying employers hire Australians: the same employer files its E-3 workers at a higher wage level.
-- Stable across years (+8.0% to +12.2%, Fig. 14), unchanged without the largest employer, and the bootstrap agrees (p ≤ 1/2000).
+- Stable across years (+8.0% to +12.2%, Fig. 14).
 - Clustering matters: treating filings as independent gives an SE of 0.0027, against 0.0064 clustered by employer (2.4× larger).
 
 **P2: E-3 filings are denied more often, but within employer the gap is small in absolute terms.**
@@ -40,23 +40,19 @@ Planned in `report/preregistration.md`; each test run once. Confirmation set cle
 
 **T1**
 - naive Welch t on relative PW (ignores clustering): diff = 0.0556, t = 20.7, p = 2.27e-93, naive SE = 0.00268
-- without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US): beta = 0.0879, se = 0.00645, p = 3.7e-42
 
 By year: FY2017: +12.17% [+9.79%, +14.60%], FY2018: +7.96% [+6.03%, +9.93%], FY2020: +8.47% [+6.48%, +10.50%], FY2021: +8.23% [+6.15%, +10.36%], FY2022: +8.13% [+6.09%, +10.22%]
 
 **T2**
 - employer-level paired t (one gap per employer): mean gap = 0.052, t = 6.59, df = 694, p = 8.71e-11, employers = 695, share of employers with E-3 higher = 0.553
-- without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US): beta = 0.065, se = 0.00741, p = 1.27e-17
 
 **T3**
 - logit with size x year FE, employer-clustered: OR = 3.8, z = 24.9, p = 2.58e-137
-- without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US): beta = 0.0382, se = 0.0027, p = 1.96e-45
 
 By year: FY2017: +4.799 pp [+3.410 pp, +6.188 pp], FY2018: +6.553 pp [+5.041 pp, +8.065 pp], FY2019: +4.503 pp [+3.355 pp, +5.650 pp], FY2020: +3.953 pp [+2.842 pp, +5.065 pp], FY2021: +1.763 pp [+0.787 pp, +2.739 pp], FY2022: +1.606 pp [+0.858 pp, +2.353 pp]
 
 **T4**
 - Cochran-Mantel-Haenszel by employer x year (ignores clustering): pooled MH odds ratio = 1.89, chi2 = 20, p = 7.61e-06, informative strata = 449
 - employer-level paired t (one gap per employer): mean gap = 0.00589, t = 2.37, df = 1546, p = 0.0178, employers = 1547, share of employers with E-3 higher = 0.0498
-- without largest employer (COGNIZANT TECHNOLOGY SOLUTIONS US): beta = 0.00512, se = 0.00154, p = 0.000881
 
 ![by year](../figures/fig14_inference_by_year.png)
