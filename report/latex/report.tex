@@ -246,7 +246,7 @@ Exploration set, before and after cleaning (\code{report/cleaning\_log.md}).
 \textbf{Measure} & \textbf{Before} & \textbf{After} \\
 \midrule
 Rows & 3{,}178{,}679 & 3{,}178{,}679 (none dropped) \\
-Attributes & 17 harmonised (12 raw; location split into city, state; year, employer key, FY2019 wage added) & 40 cleaned; 210 after encoding \\
+Attributes & 17 harmonised$^{*}$ & 40 cleaned; 210 after encoding \\
 Usable prevailing wages & 2{,}645{,}476 & 2{,}623{,}796 (21{,}680 set missing: 21{,}579 outliers, 101 invalid) \\
 Wage range (annual) & \$0 -- \$1B & \$15{,}080 -- \$462{,}342 \\
 Pay units & 5, 427 mislabelled & 1 (annual) \\
@@ -258,6 +258,8 @@ Exact duplicate rows & 777{,}688 & 777{,}688, kept and counted \\
 Missing cells (not by design) & 1.92\% & 1.56\% \\
 \bottomrule
 \end{tabularx}}
+{\footnotesize $^{*}$the 12 raw columns, with worksite and employer location split into city and state, plus
+year, employer key and FY2019's offered wage.}
 
 Cleaning turned the wage into one comparable annual number: the lowest cleaned wage is exactly
 $\$7.25\times2{,}080$, the US federal minimum wage, a sign the unit fixes worked. Its log is almost
@@ -349,16 +351,15 @@ after. Neither is available, so we make no causal claim.}
 %-----------------------------------------------------------------------
 \section{Statistical inferences}
 
-\field{Rows tested:}{the held-out confirmation set: 794{,}670 filings from 33{,}314 employers that
-never appear in the exploration set, cleaned with the saved rules. E-3 vs H-1B filings only
-(H-1B1 is 0.4\% and a separate program). Wage tests use FY2017--18 and FY2020--22 (FY2019 has no
-prevailing wage) and rows with a cleaned wage and known worksite.}
+\field{Rows tested:}{the held-out confirmation set: 794{,}670 filings from 33{,}314 employers not in
+the exploration set, cleaned with the saved rules; E-3 vs H-1B only (H-1B1 is 0.4\%, a separate
+program). Wage tests use FY2017--18 and FY2020--22 (FY2019 has no prevailing wage) and rows with a
+valid wage and worksite.}
 
-\field{Common design, fixed before the held-out data was opened:}{each test is the coefficient
-$\beta$ in
-\[ y_i=\beta\,\mathrm{E3}_i+\alpha_{c(i)}+\varepsilon_i, \]
-where $\alpha_c$ is a separate intercept (\emph{fixed effect}) for each comparison cell, e.g.\
-SOC $\times$ state $\times$ year. Each choice has one reason:}
+\field{Common design, fixed before the held-out data was opened:}{each test is $\beta$ in
+$y_i=\beta\,\mathrm{E3}_i+\alpha_{c(i)}+\varepsilon_i$, where $\alpha_c$ is a separate intercept
+(\emph{fixed effect}) for each comparison cell, e.g.\ SOC $\times$ state $\times$ year. Each choice
+has one reason:}
 \begin{itemize}[leftmargin=*,itemsep=1pt,topsep=1pt]
   \item \textbf{Cell intercepts}: $\beta$ becomes the average E-3 minus H-1B gap \emph{inside}
   cells, so differences in job, place and year can't create a gap.
@@ -375,7 +376,8 @@ Before the run we checked power, the chance of detecting a gap exactly the size 
 T1 1.00, T2 0.999, T3 0.16, T4 0.93.
 
 %------------------------------------------------------------ Test 1
-\newpage\mbox{}\newpage
+% keeps page 4 for figures only, so Test 1 starts at the top of page 5; remove if text above changes
+\mbox{}\newpage\mbox{}\newpage\mbox{}\newpage
 \subsection*{Test 1 (P1): do E-3 filings carry a different prevailing wage for the same job,
 state and year?}
 
