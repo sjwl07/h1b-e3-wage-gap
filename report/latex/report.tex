@@ -269,13 +269,18 @@ merged spellings, if a merge was wrong.
 \section{Basic questions and problem statement}
 
 \minihead{Basic questions}
-\begin{enumerate}[label=\arabic*.]
-  \item Which employers file the most? (Infosys, TCS, Google, Amazon, EY; the top 10 file 16\%.)
-  \item Which jobs? (Mostly software: computer jobs are 65\% of filings, and one title alone is 30\%.)
-  \item How many filings are approved? (91\%; only 0.87\% are denied.)
-  \item Have wages risen? (Median prevailing wage $+33\%$ from FY2017 to FY2022.)
-  \item Do some regions pay more? (West \$105k vs Midwest \$78k.)
-\end{enumerate}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{0.3cm} L{3.0cm} Y@{}}
+\toprule
+ & \textbf{Question} & \textbf{Answer (exploration set)} \\
+\midrule
+1 & Which employers file the most? & Infosys, TCS, Google, Amazon, EY; the top 10 file 16\% \\
+2 & Which jobs? & software: computer jobs are 65\%, one title alone 30\% \\
+3 & How many filings are approved? & 91\% certified; only 0.87\% denied \\
+4 & Have wages risen? & median prevailing wage $+33\%$, \$72k (FY2017) $\to$ \$96k (FY2022) \\
+5 & Do some regions pay more? & West \$105k, South \$83k, Midwest \$78k \\
+\bottomrule
+\end{tabularx}}
 
 \begin{figure*}[!t]
   \figfile{\figdir fig05_visa.png}{4.6cm}
@@ -338,7 +343,8 @@ $y_i=\beta\,\mathrm{E3}_i+\alpha_{c(i)}+\varepsilon_i$, where $\alpha_c$ is a se
 Each choice has one reason:}
 \begin{itemize}[leftmargin=*,itemsep=1pt,topsep=1pt]
   \item \textbf{One level per cell}: $\beta$ is the E-3 minus H-1B gap \emph{inside} cells, so job,
-  place and year can't create it.
+  place and year can't create it. It is a two-sample comparison done inside each cell and then
+  averaged, like a paired $t$-test with groups instead of pairs.
   \item \textbf{Standard errors grouped by employer}: one employer's filings are near-copies
   (Section~2), not independent, and ignoring that makes the SE too small. Employers are the
   independent units, so the $t$-test uses employers $-\,1$ degrees of freedom.
@@ -348,8 +354,11 @@ Each choice has one reason:}
   significant, so the 95\% CI decides: \emph{meaningful} (CI beyond the MID), \emph{possibly too
   small} (CI includes it) or \emph{negligible} (CI inside it).
 \end{itemize}
+\needspace{5\baselineskip}
 Power, checked before the run (the chance of finding a gap the size of the MID): T1 1.00,
-T2 0.999, T3 0.16, T4 0.93.
+T2 0.999, T3 0.16, T4 0.93. It uses each test's SE on the exploration set, scaled up $\times$1.99
+because the test set has 4$\times$ fewer employers, at $\alpha=0.0125$ (the strictest level Holm
+can apply).
 
 %------------------------------------------------------------ Test 1
 \clearpage
@@ -445,8 +454,8 @@ one level per cell does this without assuming anything about how employers diffe
 \toprule
 \textbf{Also considered} & \textbf{Why we did not use it} \\
 \midrule
-Paired $t$-test & on cell averages it treats a cell with 1 E-3 and 500 H-1B filings like a balanced one. Run as a check with one gap per employer (695, independent): $+5.3\%$, $t=6.59$, $p=9\times10^{-11}$ \\
-Wilcoxon signed-rank test & the rank version of the paired $t$-test; it tests the median employer gap, not an average in \%, so it would repeat the paired $t$-test \\
+Paired $t$-test & counts each employer once instead of each filing. Run as a check with one gap per employer (695): $+5.3\%$ (95\% CI $+3.7\%$ to $+7.0\%$, includes 5\%), $t=6.59$, $p=9\times10^{-11}$ \\
+Wilcoxon signed-rank test & tests the median employer, not the average gap in \%, so it can't be compared with the 5\% MID. Run as a check: median gap only $+1.5\%$ ($p=3\times10^{-12}$); 55\% of employers file E-3 higher \\
 Matching & pairing each E-3 filing with an H-1B filing throws away most H-1B filings without removing more bias \\
 \bottomrule
 \end{tabularx}}
@@ -466,9 +475,11 @@ Verdict & meaningful: the whole CI is above 5\% \\
 \end{tabularx}}
 
 The same employer files its E-3 workers at a prevailing wage about 7\% higher than its H-1B
-workers in the same job, state and year. That is about 75\% of the Test~1 gap, so the gap comes
-mostly from \emph{how} employers file, not \emph{which} employers hire Australians (Test~2 covers
-only employers filing both visas, so the two numbers come from different sets of employers).
+workers in the same job, state and year: about 75\% of the Test~1 gap (from a different set of
+employers, those filing both visas). But the gap is \textbf{concentrated in some employers}:
+counting each employer once gives $+5.3\%$ and the median employer only $+1.5\%$, and without
+copy rows it is $+6.0\%$; all three CIs include 5\%. So the same employer does file E-3 higher,
+but only the filing-weighted average clearly passes 5\%; for a typical employer the gap is small.
 
 %------------------------------------------------------------ Test 3
 \needspace{18\baselineskip}
@@ -501,7 +512,7 @@ directly in percentage points, the unit of the MID, with no extra assumption abo
 \toprule
 \textbf{Also considered} & \textbf{Why we did not use it} \\
 \midrule
-CMH test & the Cochran--Mantel--Haenszel test, the classic test for 2$\times$2 tables within groups, but treats filings as independent; the logistic regression gives the same odds ratio and handles the near-copies \\
+CMH test & the Cochran--Mantel--Haenszel test, the classic test for 2$\times$2 tables within groups; it gives an odds ratio, not pp, and treats filings as independent. Run as a check: odds ratio 3.82, $p<10^{-100}$ \\
 Logistic regression & gives an odds ratio, not pp. Run as a check, same cells and grouped SE: odds ratio 3.80, $z=24.9$ \\
 $\chi^2$ test & on the raw 2$\times$2 table it ignores employer size, which is what the question is about \\
 \bottomrule
@@ -523,8 +534,9 @@ Verdict & meaningful: the whole CI is above 0.5\,pp \\
 
 Among employers of the same size in the same year, E-3 filings are denied 3.8\,pp more often.
 Employer size explains only 17\% of the raw gap: it shrinks the gap but doesn't reverse it, so
-there is no Simpson's paradox. Planned power was low (0.16) because a gap of only 0.5\,pp is hard
-to see through the noise, but the real gap is about eight times that, so it was found easily.
+there is no Simpson's paradox. Planned power was low (0.16) because the expected SE (0.33\,pp)
+was large next to a 0.5\,pp gap at $\alpha=0.0125$. The real SE was 0.27\,pp and the gap 3.79\,pp,
+about eight times the MID, so low power didn't limit this result.
 \emph{Not planned in advance:} the gap shrinks from $+6.6$\,pp in FY2018 to $+1.6$\,pp in FY2022.
 
 %------------------------------------------------------------ Test 4
@@ -554,8 +566,8 @@ experience with the process and how it fills in forms, which size groups only ro
 \textbf{Also considered} & \textbf{Why we did not use it} \\
 \midrule
 CMH test & by employer $\times$ year, the standard test for a 2$\times$2 gap within many groups, but gives an odds ratio, not pp. Run as a check: odds ratio 1.89, $p=7.6\times10^{-6}$ \\
-Paired $t$-test & one gap per employer (1{,}547 employers), no regression. Run as a check: $+0.59$\,pp, $p=0.018$ \\
-Wilcoxon signed-rank test & only 306 of 1{,}547 employers have any gap, and it would repeat the paired $t$-test \\
+Paired $t$-test & one gap per employer (1{,}547 employers), no regression. Run as a check: $+0.59$\,pp (95\% CI $+0.10$ to $+1.08$), $p=0.018$ \\
+Wilcoxon signed-rank test & tests the median employer, and only 306 of 1{,}547 employers have any gap, so the median is 0. Run as a check: $p=0.0005$ \\
 Logistic regression & with one column per employer (1{,}547 columns), but most employer-years have no denial at all, so the odds ratios come out biased \\
 \bottomrule
 \end{tabularx}}
@@ -580,6 +592,41 @@ that matters. Compared with these employers' low H-1B rate (0.30\%), E-3's rate 
 employers, as in Test~2), so most of the E-3 denial gap comes from \emph{which} employers file
 E-3, not from how one employer's filings are treated.
 
+%------------------------------------------------------------ summary
+\subsection*{Summary: main tests and the other tests we ran}
+Every other test agrees on the direction and the decision (reject $H_0$). The ``vs MID'' column
+says whether its 95\% CI clears the MID (yes), includes it (overlaps) or has no CI.
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}L{0.45cm} L{3.2cm} Y L{1.05cm}@{}}
+\toprule
+\textbf{Test} & \textbf{Test used} & \textbf{Result} & \textbf{vs MID} \\
+\midrule
+T1 & main regression & $+9.1\%$ (7.7 to 10.5) & yes \\
+   & same, without copy rows & $+8.4\%$ (7.1 to 9.6) & yes \\
+   & Welch $t$-test & $+5.7\%$, $p=2\times10^{-93}$ & no CI \\
+\midrule
+T2 & main regression & $+6.8\%$ (5.3 to 8.3) & yes \\
+   & same, without copy rows & $+6.0\%$ (4.7 to 7.4) & overlaps \\
+   & paired $t$-test & $+5.3\%$ (3.7 to 7.0) & overlaps \\
+   & Wilcoxon signed-rank test & median $+1.5\%$, $p=3\times10^{-12}$ & no CI \\
+\midrule
+T3 & main regression & $+3.79$\,pp (3.26 to 4.31) & yes \\
+   & same, without copy rows & $+3.67$\,pp (3.17 to 4.18) & yes \\
+   & CMH test & odds ratio 3.82, $p<10^{-100}$ & no CI \\
+   & logistic regression & odds ratio 3.80, $p=3\times10^{-137}$ & no CI \\
+\midrule
+T4 & main regression & $+0.51$\,pp (0.22 to 0.81) & overlaps \\
+   & same, without copy rows & $+0.48$\,pp (0.16 to 0.79) & overlaps \\
+   & CMH test & odds ratio 1.89, $p=8\times10^{-6}$ & no CI \\
+   & paired $t$-test & $+0.59$\,pp (0.10 to 1.08) & overlaps \\
+   & Wilcoxon signed-rank test & median 0, $p=0.0005$ & no CI \\
+\bottomrule
+\end{tabularx}}
+
+Tests 1 and 3 hold under every check. Test 4 stays ``possibly too small''. Test 2 is the fragile
+one: only the main, filing-weighted test clears 5\%, so its premium is concentrated in some
+employers.
+
 %-----------------------------------------------------------------------
 \section{Limitations}
 \begin{itemize}
@@ -591,12 +638,13 @@ E-3, not from how one employer's filings are treated.
   \item \textbf{FY2019 left out of the wage tests}, since its file has no prevailing wage, and
   most of its work locations are blank.
   \item \textbf{Copies kept.} If some identical rows are export errors, big employers count too
-  much; grouping the SE by employer keeps the uncertainty honest, but we didn't re-run the tests
-  without the copies.
+  much. Re-running without them keeps every decision, but Test 2's CI then includes 5\% (summary
+  table).
   \item \textbf{Tests 2 and 4 cover only employers filing both visas}, which are larger than average.
   \item \textbf{Denial here is DOL's check of the form}, not the visa decision, which USCIS makes later.
   \item \textbf{Extras not planned in advance.} The year-by-year results and the employer-level
-  checks of Tests 2 and 4 were not in the plan and are not Holm-corrected. The full test plan, and
+  checks of Tests 2 and 4 and the runs without copy rows were not in the plan and are not
+  Holm-corrected. The full test plan, and
   what changed in it, is in \code{report/preregistration.md}.
 \end{itemize}
 

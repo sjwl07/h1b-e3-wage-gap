@@ -7,7 +7,7 @@ CSE558 Data Science, IIIT-Delhi, Monsoon 2026 · Group **Ramanujan et al.** (Shi
 | Test | Result | Verdict |
 |---|---|---|
 | T1: wage, same job × state × year | E-3 **+9.1%** (95% CI 7.7 to 10.5) | meaningful (MID 5%) |
-| T2: wage, same employer too | E-3 **+6.8%** (5.3 to 8.3) | meaningful |
+| T2: wage, same employer too | E-3 **+6.8%** (5.3 to 8.3) | meaningful, but concentrated in some employers (median employer +1.5%) |
 | T3: denial, same employer size × year | E-3 **+3.79 pp** (3.26 to 4.31) | meaningful (MID 0.5 pp) |
 | T4: denial, same employer × year | E-3 **+0.51 pp** (0.22 to 0.81) | possibly too small |
 

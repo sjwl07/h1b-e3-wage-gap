@@ -17,7 +17,7 @@ from scipy import stats
 from statsmodels.stats.contingency_tables import StratifiedTable
 from statsmodels.stats.multitest import multipletests
 
-from clean import clean
+from clean import SOURCE_COLS, clean
 from config import CONFIRM_PATH, DATA_PROCESSED, FIGURES, REPORT
 from fe import fe_ols, informative
 from tests_spec import ALPHA_FAMILY, TESTS, prepare, relative_pw
@@ -85,8 +85,8 @@ def cmh(pop, cells):
 
 
 def size_checks(pop, t):
-    """T3: a logit with the same size x year fixed effects."""
-    out = {}
+    """T3: CMH test and a logit with the same size x year fixed effects."""
+    out = {"Cochran-Mantel-Haenszel by size x year (ignores clustering)": cmh(pop, t["cells"])}
     # logistic regression with the same cell fixed effects, employer-clustered;
     # fit on rows aggregated to employer x cell x visa (binomial counts) to keep it small
     agg = (pop.groupby(["employer_key"] + t["cells"] + ["e3"], observed=True)["denied"]
@@ -106,16 +106,22 @@ def size_checks(pop, t):
 def employer_paired(pop, t):
     """T2, T4 (added after the planned run): one gap per employer, the average of its within-cell
     E-3 minus H-1B mean differences, so employers are the independent units. Then a one-sample t-test
-    on those gaps: no regression, no clustering."""
+    and a Wilcoxon signed-rank test (zero gaps dropped) on those gaps: no regression, no clustering.
+    The mean says how large the gap is on average; the median says how large it is for a typical employer."""
     d = pop[informative(pop, "e3", t["cells"])]
     m = d.groupby(t["cells"] + ["e3"], observed=True)[t["y"]].mean().unstack("e3")
     gap = (m[1] - m[0]).groupby(level="employer_key").mean()
     tt = stats.ttest_1samp(gap, 0)
+    lo, hi = tt.confidence_interval(0.95)
+    w = stats.wilcoxon(gap)
     return {
         "employer-level paired t (one gap per employer)": {
-            "mean gap": float(gap.mean()), "t": float(tt.statistic), "df": len(gap) - 1, "p": float(tt.pvalue),
+            "mean gap": float(gap.mean()), "ci95": [float(lo), float(hi)], "t": float(tt.statistic),
+            "df": len(gap) - 1, "p": float(tt.pvalue),
             "employers": len(gap), "employers with a non-zero gap": int((gap != 0).sum()),
             "share of employers with E-3 higher": float((gap > 0).mean())},
+        "Wilcoxon signed-rank on employer gaps": {
+            "median gap": float(gap.median()), "W": float(w.statistic), "p": float(w.pvalue)},
     }
 
 
@@ -124,6 +130,14 @@ def employer_checks(pop, t):
     d = pop[informative(pop, "e3", t["cells"])]
     return {"Cochran-Mantel-Haenszel by employer x year (ignores clustering)": cmh(d, t["cells"]),
             **employer_paired(pop, t)}
+
+
+def dedup_check(pop, t):
+    """The same test with exact copy rows (identical in every source column) kept only once."""
+    r = fe_ols(pop.drop_duplicates(SOURCE_COLS), t["y"], "e3", t["cells"], "employer_key")
+    lo, hi = ci(r)
+    return {"without exact copy rows": {"beta": r["beta"], "ci95": [float(lo), float(hi)], "t": r["t"], "df": r["df"],
+                                        "p": r["p"], "n": r["n"]}}
 
 
 # T2 shares T1's population, so the Welch check would only repeat T1's
@@ -201,8 +215,7 @@ def main():
                          "mean_y_e3": float(pop.loc[pop["e3"] == 1, t["y"]].mean()),
                          "mean_y_h1b_used": float(used.loc[used["e3"] == 0, t["y"]].mean())}
         extra = EXTRA_CHECKS.get(name)
-        if extra:
-            checks[name] = extra(pop, t)
+        checks[name] = {**(extra(pop, t) if extra else {}), **dedup_check(pop, t)}
         if name in ("T1", "T3"):
             years[name] = by_year(pop, t)
         print(name, {k: v for k, v in results[name].items() if k in ("beta", "se", "t", "df", "p")})
@@ -230,6 +243,9 @@ def interpretation(results, checks, years):
     y3 = years["T3"]
     cmh4 = checks["T4"]["Cochran-Mantel-Haenszel by employer x year (ignores clustering)"]
     logit3 = checks["T3"]["logit with size x year FE, employer-clustered"]
+    pair2 = checks["T2"]["employer-level paired t (one gap per employer)"]
+    wil2 = checks["T2"]["Wilcoxon signed-rank on employer gaps"]
+    dd2 = checks["T2"]["without exact copy rows"]
     e3_rate4 = r4["mean_y_h1b_used"] + r4["beta"]
     return [
         "## Interpretation",
@@ -245,6 +261,10 @@ def interpretation(results, checks, years):
         "held fixed (T2 uses only employers filing both visas for the same job, so the two numbers come from "
         "different sets of employers), so it isn't mainly that higher-paying employers hire Australians: the same employer files "
         "its E-3 workers at a higher wage level.",
+        f"- But the T2 gap is concentrated in some employers: counting each employer once gives "
+        f"{pc(pair2['mean gap']):+.1f}% [{pc(pair2['ci95'][0]):+.1f}, {pc(pair2['ci95'][1]):+.1f}], the median "
+        f"employer {pc(wil2['median gap']):+.1f}%, and without exact copy rows {pc(dd2['beta']):+.1f}% "
+        f"[{pc(dd2['ci95'][0]):+.1f}, {pc(dd2['ci95'][1]):+.1f}]; these CIs include the 5% MID.",
         f"- Stable across years ({min(y1):+.1f}% to {max(y1):+.1f}%, Fig. 14).",
         f"- Clustering matters: treating filings as independent gives an SE of {naive['naive SE']:.4f}, against "
         f"{r1['se']:.4f} clustered by employer ({r1['se'] / naive['naive SE']:.1f}× larger).",
@@ -304,8 +324,9 @@ def write_md(results, checks, years, clog):
         lines = []
         for k, v in checks[n].items():
             if isinstance(v, dict):
-                lines.append(f"- {k}: " + ", ".join(
-                    f"{a} = {b:.3g}" if isinstance(b, float) else f"{a} = {b}" for a, b in v.items()))
+                fmt = lambda b: (f"{b:.3g}" if isinstance(b, float)
+                                 else f"[{b[0]:.3g}, {b[1]:.3g}]" if isinstance(b, list) else f"{b}")
+                lines.append(f"- {k}: " + ", ".join(f"{a} = {fmt(b)}" for a, b in v.items()))
             else:
                 lines.append(f"- {k}: {v}")
         return "\n".join(lines)

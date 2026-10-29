@@ -44,7 +44,7 @@ With ~800k filings, almost any difference will be statistically significant; the
   - *Welch two-sample t-test on relative PW:* the same comparison, but it treats every filing as independent, which they aren't, so it understates the SE. Run as a check.
   - *Mann–Whitney U:* tests a shift in ranks, which can't be compared with a 5% MID; log wage is already symmetric, so ranks add nothing; also assumes independence.
   - *Raw comparison without cells:* mixes occupation, state and year composition into the gap.
-- **Check:** Welch t.
+- **Checks:** Welch t; the same test without exact copy rows.
 
 ## T2. The same comparison within the same employer (P1)
 
@@ -56,9 +56,9 @@ With ~800k filings, almost any difference will be statistically significant; the
 - **Estimand caveat:** it describes employers that hire both groups for the same job, which are larger than average; it isn't the average E-3 filing.
 - **Other tests considered:**
   - *Paired t-test on cell means:* weights a cell with 1 E-3 and 500 H-1B filings the same as a balanced one. Run as a check in the form of one gap per employer, so employers are the independent units.
-  - *Wilcoxon signed-rank:* the rank version of the paired t; it would repeat that check.
+  - *Wilcoxon signed-rank:* tests the median employer gap, not the average in %, so it can't be compared with the 5% MID. Run as a check, because the median shows whether the gap is typical or concentrated in some employers.
   - *Matching each E-3 filing to an H-1B filing of the same employer and cell:* discards most H-1B filings for no gain in bias.
-- **Check:** paired t on employer gaps.
+- **Checks:** paired t and Wilcoxon on employer gaps; the same test without exact copy rows.
 
 ## T3. E-3 vs H-1B denial rate, same employer-size group × year (P2)
 
@@ -70,9 +70,9 @@ With ~800k filings, almost any difference will be statistically significant; the
 - **Why it fits:** EDA shows employer size is the main confounder (Fig. 7). The linear probability model gives the difference directly in percentage points, which is how the MID is stated.
 - **Other tests considered:**
   - *Logistic regression:* gives an odds ratio, not a difference in pp. Run as a check with the same cells and clustering.
-  - *Cochran–Mantel–Haenszel test by size × year:* the classic stratified 2×2 test, but it assumes independent filings; the logit gives the same odds ratio with clustering.
+  - *Cochran–Mantel–Haenszel test by size × year:* the classic stratified 2×2 test, but it gives an odds ratio, not pp, and assumes independent filings. Run as a check.
   - *Chi-square on the raw 2×2 table:* ignores the size confounder the problem statement is about.
-- **Check:** logistic regression.
+- **Checks:** CMH; logistic regression; the same test without exact copy rows.
 
 ## T4. E-3 vs H-1B denial rate, same employer × year (P2)
 
@@ -85,8 +85,8 @@ With ~800k filings, almost any difference will be statistically significant; the
 - **Other tests considered:**
   - *Cochran–Mantel–Haenszel test by employer × year:* the standard test for a 2×2 gap within many groups; gives an odds ratio, not pp. Run as a check.
   - *Logistic regression with employer dummies:* with thousands of employer dummies (6,309 employers in exploration) and most employer-years having no denial, the odds ratios come out biased.
-  - *Wilcoxon signed-rank on employer gaps:* most employers have a zero gap, and it would repeat the paired t.
-- **Checks:** CMH by employer × year; paired t on employer gaps.
+  - *Wilcoxon signed-rank on employer gaps:* tests the median employer; most employers have a zero gap, so the median is 0. Run as a check.
+- **Checks:** CMH by employer × year; paired t and Wilcoxon on employer gaps; the same test without exact copy rows.
 
 ---
 
@@ -94,4 +94,4 @@ With ~800k filings, almost any difference will be statistically significant; the
 Test statistic, df, raw p-value, Holm-adjusted p-value, decision at family-wise α = 0.05, the estimate with a 95% CI (log points and %, or pp), the verdict from the CI against ±MID, the number of rows, cells and employers used, and the checks listed above.
 
 ## Changes since the original plan
-Only the checks changed: the TOST step for "negligible" was dropped (the CI alone decides, and no verdict depended on it); the conditional logit for T4 was replaced by CMH, because the software failed on employers with thousands of filings; Mann–Whitney, Wilcoxon and the T3 CMH were dropped as repeats; the bootstrap p-value and the leave-out-the-largest-employer check were dropped as unnecessary; the employer-level paired t-tests for T2 and T4 were added after the run, so they aren't Holm-corrected.
+Only the checks changed: the TOST step for "negligible" was dropped (the CI alone decides, and no verdict depended on it); the conditional logit for T4 was replaced by CMH, because the software failed on employers with thousands of filings; Mann–Whitney was dropped as a repeat of Welch; the bootstrap p-value and the leave-out-the-largest-employer check were dropped as unnecessary; the employer-level paired t and Wilcoxon tests for T2 and T4, and the runs without exact copy rows, were added after the run, so they aren't Holm-corrected. These extras matter for T2: counting each employer once (+5.3%, CI 3.7 to 7.0) or dropping copy rows (+6.0%, CI 4.7 to 7.4) gives CIs that include the 5% MID, and the median employer gap is only +1.5%.

@@ -25,6 +25,7 @@ Planned in `report/preregistration.md`; each test run once. Confirmation set cle
 **P1: E-3 filings carry a meaningfully higher prevailing wage, and most of it is within employer.**
 - T1: for the same SOC title, state and year, E-3 filings are +9.1% [+7.7, +10.5] above H-1B; the whole CI is above the 5% MID. The raw gap is +9.6%, so occupation, state and year mix explain almost none of it.
 - T2: within the same employer, job, state and year the gap is +6.8% [+5.3, +8.3], still entirely above the MID. About 75% of the T1 gap (in log points) remains when the employer is held fixed (T2 uses only employers filing both visas for the same job, so the two numbers come from different sets of employers), so it isn't mainly that higher-paying employers hire Australians: the same employer files its E-3 workers at a higher wage level.
+- But the T2 gap is concentrated in some employers: counting each employer once gives +5.3% [+3.7, +7.0], the median employer +1.5%, and without exact copy rows +6.0% [+4.7, +7.4]; these CIs include the 5% MID.
 - Stable across years (+8.0% to +12.2%, Fig. 14).
 - Clustering matters: treating filings as independent gives an SE of 0.0027, against 0.0064 clustered by employer (2.4× larger).
 
@@ -40,19 +41,26 @@ Planned in `report/preregistration.md`; each test run once. Confirmation set cle
 
 **T1**
 - naive Welch t on relative PW (ignores clustering): diff = 0.0556, t = 20.7, p = 2.27e-93, naive SE = 0.00268
+- without exact copy rows: beta = 0.0802, ci95 = [0.0687, 0.0918], t = 13.7, df = 19298, p = 3.15e-42, n = 278253
 
 By year: FY2017: +12.17% [+9.79%, +14.60%], FY2018: +7.96% [+6.03%, +9.93%], FY2020: +8.47% [+6.48%, +10.50%], FY2021: +8.23% [+6.15%, +10.36%], FY2022: +8.13% [+6.09%, +10.22%]
 
 **T2**
-- employer-level paired t (one gap per employer): mean gap = 0.052, t = 6.59, df = 694, p = 8.71e-11, employers = 695, employers with a non-zero gap = 604, share of employers with E-3 higher = 0.553
+- employer-level paired t (one gap per employer): mean gap = 0.052, ci95 = [0.0365, 0.0675], t = 6.59, df = 694, p = 8.71e-11, employers = 695, employers with a non-zero gap = 604, share of employers with E-3 higher = 0.553
+- Wilcoxon signed-rank on employer gaps: median gap = 0.0152, W = 6.14e+04, p = 2.74e-12
+- without exact copy rows: beta = 0.0585, ci95 = [0.0456, 0.0715], t = 8.89, df = 694, p = 5.38e-18, n = 31488
 
 **T3**
+- Cochran-Mantel-Haenszel by size x year (ignores clustering): pooled MH odds ratio = 3.82, chi2 = 1.24e+03, p = 0, informative strata = 30
 - logit with size x year FE, employer-clustered: OR = 3.8, z = 24.9, p = 2.58e-137
+- without exact copy rows: beta = 0.0367, ci95 = [0.0317, 0.0418], t = 14.3, df = 32955, p = 1.88e-46, n = 552857
 
 By year: FY2017: +4.799 pp [+3.410 pp, +6.188 pp], FY2018: +6.553 pp [+5.041 pp, +8.065 pp], FY2019: +4.503 pp [+3.355 pp, +5.650 pp], FY2020: +3.953 pp [+2.842 pp, +5.065 pp], FY2021: +1.763 pp [+0.787 pp, +2.739 pp], FY2022: +1.606 pp [+0.858 pp, +2.353 pp]
 
 **T4**
 - Cochran-Mantel-Haenszel by employer x year (ignores clustering): pooled MH odds ratio = 1.89, chi2 = 20, p = 7.61e-06, informative strata = 449
-- employer-level paired t (one gap per employer): mean gap = 0.00589, t = 2.37, df = 1546, p = 0.0178, employers = 1547, employers with a non-zero gap = 306, share of employers with E-3 higher = 0.0498
+- employer-level paired t (one gap per employer): mean gap = 0.00589, ci95 = [0.00102, 0.0108], t = 2.37, df = 1546, p = 0.0178, employers = 1547, employers with a non-zero gap = 306, share of employers with E-3 higher = 0.0498
+- Wilcoxon signed-rank on employer gaps: median gap = 0, W = 1.81e+04, p = 0.000499
+- without exact copy rows: beta = 0.00479, ci95 = [0.00164, 0.00794], t = 2.98, df = 1546, p = 0.00293, n = 218747
 
 ![by year](../figures/fig14_inference_by_year.png)
