@@ -138,7 +138,7 @@ is blank in 88\% of rows; wages come in five pay units with typing errors (an ``
 \midrule
 Rows & 3{,}973{,}349 & 3{,}178{,}679 \\
 Columns & 11--12 & 210 \\
-Rows $\times$ columns & 47{,}680{,}188 & 667{,}522{,}590 \\
+Rows $\times$ columns & 45{,}736{,}562 & 667{,}522{,}590 \\
 \bottomrule
 \end{tabularx}}
 
@@ -146,7 +146,8 @@ Rows $\times$ columns & 47{,}680{,}188 & 667{,}522{,}590 \\
 back for testing, Section~2): $3{,}178{,}679\times210=667{,}522{,}590\ge3{,}000{,}000$. The 210
 columns are 197 yes/no (one-hot) columns (the 50 most common occupations plus \code{Other}, work
 and employer state, year, quarter, visa, decision, pay unit, full-time, region) and 13 number
-columns. The raw files alone already pass: $3{,}973{,}349\times12\approx47.7$M.}
+columns. The raw files alone already pass: FY2017--19 have 11 columns and FY2020--22 have 12, so
+$1{,}943{,}626\times11+2{,}029{,}723\times12=45{,}736{,}562$.}
 
 \minihead{Key features} (all columns, with type, unit, range and missing values by year: \code{report/data\_dictionary.md})
 {\footnotesize
@@ -188,7 +189,7 @@ decision spelled two ways (capitals before FY2020, normal case after)
  & otherwise one decision counts as two \\
 FY2019 wage column is the offered wage
  & kept as its own column; FY2019's prevailing wage left blank
- & 39\% of FY2019 values are round thousands, against under 1\% in every other year, and the median wage per occupation jumps $+14.5\%$ then falls $-8\%$. Mixing them would push FY2019 wages up about 10\% \\
+ & 39\% of FY2019 values are round thousands, against under 1\% in every other year, and the median wage per occupation jumps $+15.6\%$ into FY2019 then falls $-7.8\%$ out of it (\code{report/\allowbreak fy2019\_\allowbreak wage\_\allowbreak check.md}) \\
 777{,}688 exact copy rows (24\%)
  & \textbf{kept}, and counted in \code{n\_identical}
  & there is no case number, and in DOL's own data every row is a separate application. The copy share rises with employer size (18\% $\to$ 55\%) and differs by decision (36\% certified vs 16\% withdrawn); an export mistake wouldn't do that. Dropping them would delete real filings of big employers; their similarity is handled in the tests (Section~5) \\
@@ -208,16 +209,16 @@ five pay units, 427 wrong (``Hour'' $=46{,}301$)
  & impossible values; the row's decision is still valid \\
 1{,}769 occupation spellings (codes stuck on, typos, plurals)
  & merged into 1{,}123: compare letters only, ignore plurals, then join rare spellings that are at least 92\% similar
- & exact matching keeps e.g.\ ``15-1121.00Computer\-systems\-analysts'' as a separate job. We checked the merges by hand; a looser cut-off wrongly joined ``Electrical'' and ``Electronics'' engineers \\
+ & exact matching keeps e.g.\ ``15-1121.00Computer\-systems\-analysts'' as a separate job. All 215 merges are listed in \code{report/\allowbreak soc\_\allowbreak fuzzy\_\allowbreak merges.md}; a looser cut-off would join ``Electrical'' and ``Electronics'' engineers (0.89 similar) \\
 extreme wages (a \$1B ``yearly'' wage)
  & IQR outlier rule (1.5) on \emph{log} wage, separately for each occupation; 21{,}579 wages set to missing and marked
  & log, because wages have a long right tail; per occupation, because \$200k is normal for a surgeon, not a cook. Blanking the wage (not the row) keeps the decision \\
-employer country blank (100{,}916) or ``Georgia''
- & set to USA when the employer's state is a US state
+employer country blank (100{,}932) or ``Georgia''
+ & set to USA when the employer's state is a US state; 16 stay blank
  & the address shows the country; a US state was typed as the country \\
 FY2019 work location 88\% blank
  & marked, not filled in
- & work and employer state match in only 52\% of rows, and the blank rows are different (93\% vs 61\% certified), so filling them in would invent locations \\
+ & work and employer state match in only 52\% of rows, and in FY2019 the blank rows are different (93\% vs 60\% certified), so filling them in would invent locations \\
 columns to encode
  & year, quarter, decision, visa, pay unit, full-time, states, region as yes/no columns; flags 0/1; employer filing count logged
  & yes/no columns assume no order, so wages can move unevenly by year; the two outcomes stay as numbers (\code{log\_pw}, \code{denied} 0/1) for the tests; filing counts are very uneven (1--21{,}448) \\
@@ -244,9 +245,8 @@ Pay units & 5, 427 wrong & 1 (yearly) \\
 Occupation spellings & 1{,}769 & 1{,}123 \\
 Job title spellings & 439{,}495 & 375{,}194 \\
 Employer name spellings & 204{,}209 & 132{,}485 employers \\
-Blank employer country & 100{,}916 & 0 \\
+Blank employer country & 100{,}932 & 16 \\
 Exact copy rows & 777{,}688 & 777{,}688, kept and counted \\
-Missing cells (not by design) & 1.92\% & 1.56\% \\
 \bottomrule
 \end{tabularx}}
 
@@ -407,7 +407,8 @@ Verdict & meaningful: the whole CI is above 5\% \\
 
 For the same job, state and year, E-3 filings have a prevailing wage about 9\% higher than H-1B
 filings, well past the 5\% that matters. Job, state and year explain almost none of the raw
-$+9.6\%$ gap. The result is steady across years ($+8$ to $+12\%$, not planned in advance; Fig.~\ref{fig:est}).
+$+9.6\%$ gap. The result is steady across years ($+8$ to $+12\%$; not planned in advance, see
+\code{report/inference\_results.md}).
 
 \begin{figure*}[!t]
   \figfile{\figdir fig13_inference_estimates.png}{4.3cm}

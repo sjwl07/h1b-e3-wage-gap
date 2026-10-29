@@ -121,6 +121,7 @@
     "df": 694,
     "p": 8.706104991109125e-11,
     "employers": 695,
+    "employers with a non-zero gap": 604,
     "share of employers with E-3 higher": 0.5525179856115108
    }
   },
@@ -144,6 +145,7 @@
     "df": 1546,
     "p": 0.01777933340621351,
     "employers": 1547,
+    "employers with a non-zero gap": 306,
     "share of employers with E-3 higher": 0.049773755656108594
    }
   }

@@ -128,6 +128,20 @@ def fit_soc_map(soc):
     return {"key_to_label": key_to_label, "common_keys": common}
 
 
+def fuzzy_merges_md(p):
+    """Every rare spelling that the fuzzy step joined to a common occupation, for checking by hand."""
+    canon_key = {k: soc_key(v) for k, v in p["key_to_label"].items()}
+    rows = [{"rare spelling (key)": k, "merged into": v,
+             "similarity": round(difflib.SequenceMatcher(None, k, canon_key[k]).ratio(), 3)}
+            for k, v in sorted(p["key_to_label"].items()) if canon_key[k] != k]
+    tie = difflib.SequenceMatcher(None, soc_key("Electrical Engineers"), soc_key("Electronics Engineers")).ratio()
+    return ("# Fuzzy occupation merges (exploration set)\n\n"
+            f"Rare spellings (< {SOC_MIN_ROWS} rows) joined to a common occupation at similarity >= "
+            f"{SOC_FUZZY_CUTOFF}: {len(rows)} merges. Why the cut-off is {SOC_FUZZY_CUTOFF}: 'Electrical "
+            f"Engineers' and 'Electronics Engineers' are {tie:.3f} similar, so a looser cut-off would join two "
+            "different jobs.\n\n" + pd.DataFrame(rows).to_markdown(index=False) + "\n")
+
+
 def apply_soc_map(soc, p):
     k2l, common = p["key_to_label"], p["common_keys"]
 
@@ -210,11 +224,14 @@ def clean(df, params=None):
     st = df["employer_state"].astype("str").str.lower()
     us_state = st.isin(REGION)
     ctry = df["employer_country"].astype("str")
-    fix = us_state & (df["employer_country"].isna() | ctry.str.lower().isin(REGION))
-    df["employer_country"] = ctry.where(~fix, USA).astype("category")
+    blank = df["employer_country"].isna()
+    blank_fy17 = blank[df["fiscal_year"] == 2017].mean()
+    fix = us_state & (blank | ctry.str.lower().isin(REGION))
+    df["employer_country"] = ctry.where(~fix, USA).where(~blank | fix).astype("category")
     log.add("3. fill / fix employer_country", df,
-            "blank country (15.6% of FY2017 rows) or a US state given as the country ('Georgia') with a US "
-            "employer state -> United States Of America", cells_changed=fix.sum())
+            f"blank country ({100 * blank_fy17:.1f}% of FY2017 rows) or a US state given as the country "
+            "('Georgia') with a US employer state -> United States Of America. Blank countries: "
+            f"{int(blank.sum()):,} -> {int(df['employer_country'].isna().sum()):,}", cells_changed=fix.sum())
 
     # 4. sentinel / unusable wages
     w = df["prevailing_wage"].fillna(df["wage_offered_fy2019"])
@@ -282,10 +299,15 @@ def clean(df, params=None):
 
     # 9. worksite gap (FY2019): flag, don't impute
     df["worksite_missing"] = df["worksite_state"].isna().astype("int8")
+    both = df["worksite_state"].notna() & df["employer_state"].notna()
+    agree = (df.loc[both, "worksite_state"].astype("str") == df.loc[both, "employer_state"].astype("str")).mean()
+    fy19 = df[df["fiscal_year"] == 2019]
+    cert = (fy19["case_status"] == "CERTIFIED").groupby(fy19["worksite_state"].isna()).mean()
     log.add("9. flag missing worksite (not imputed)", df,
-            "88% of FY2019 rows have no worksite in the source file. Not imputed from employer location: "
-            "the two states agree in only ~52% of the rows that have both, and the gap isn't random "
-            "(blank rows are 93% CERTIFIED vs 61% for the others). Worksite analyses exclude FY2019")
+            f"{100 * fy19['worksite_state'].isna().mean():.0f}% of FY2019 rows have no worksite in the source "
+            f"file. Not imputed from employer location: the two states agree in only {100 * agree:.1f}% of the "
+            f"rows that have both, and the gap isn't random (in FY2019, blank rows are {100 * cert[True]:.1f}% "
+            f"CERTIFIED vs {100 * cert[False]:.1f}% for the others). Worksite analyses exclude FY2019")
 
     # 10. derived features
     ws = df["worksite_state"].astype("str").str.lower()
@@ -350,6 +372,7 @@ def main():
     )
 
     REPORT.mkdir(parents=True, exist_ok=True)
+    (REPORT / "soc_fuzzy_merges.md").write_text(fuzzy_merges_md(params["soc"]))
     (REPORT / "cleaning_log.md").write_text(
         "# Cleaning log (exploration set)\n\n" + log.to_markdown(index=False) + "\n" + summary)
     with pd.option_context("display.width", 220, "display.max_colwidth", 60):

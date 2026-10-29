@@ -28,14 +28,14 @@ python3 -m venv .venv
 ```
 
 ## Pipeline
-Run from `h1-b/`:
+Run from the repository root (`h1b-e3-wage-gap/`):
 
 | Step | Command | Output |
 |---|---|---|
 | 1. Load the 6 years and match their columns | `.venv/bin/python src/load.py` | `data/raw/lca_all.parquet`, `report/load_log.json`, `report/fy2019_wage_check.md` |
 | 2. Split (before any EDA) | `.venv/bin/python src/split.py` | `data/raw/explore.parquet`, `data/raw/confirm.parquet`, `report/split_log.json` |
 | 3. Data dictionary | `.venv/bin/python src/data_dictionary.py` | `report/data_dictionary.md` |
-| 4. Cleaning | `.venv/bin/python src/clean.py` | `data/processed/explore_clean.parquet`, `data/processed/clean_params.json`, `report/cleaning_log.md` |
+| 4. Cleaning | `.venv/bin/python src/clean.py` | `data/processed/explore_clean.parquet`, `data/processed/clean_params.json`, `report/cleaning_log.md`, `report/soc_fuzzy_merges.md` |
 | 5. EDA | `.venv/bin/python src/eda.py` | `figures/fig01–fig12.png`, `figures/fig15_basic_questions.png`, `report/eda.md` |
 | 6. Power check for the planned tests | `.venv/bin/python src/power.py` | `report/power.md` (tests defined in `src/tests_spec.py`, model in `src/fe.py`; the problem statements and test plan are written by hand in `report/problem_statements.md` and `report/preregistration.md`) |
 | 7. Hypothesis tests (confirmation set) | `.venv/bin/python src/inference.py` | `report/inference_results.{md,json}`, `report/cleaning_log_confirm.md`, `data/processed/confirm_clean.parquet`, `figures/fig13–fig14.png` |

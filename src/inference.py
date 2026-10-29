@@ -114,7 +114,8 @@ def employer_paired(pop, t):
     return {
         "employer-level paired t (one gap per employer)": {
             "mean gap": float(gap.mean()), "t": float(tt.statistic), "df": len(gap) - 1, "p": float(tt.pvalue),
-            "employers": len(gap), "share of employers with E-3 higher": float((gap > 0).mean())},
+            "employers": len(gap), "employers with a non-zero gap": int((gap != 0).sum()),
+            "share of employers with E-3 higher": float((gap > 0).mean())},
     }
 
 

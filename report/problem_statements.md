@@ -5,7 +5,7 @@ Written 2026-10-21 after EDA on the exploration set (`report/eda.md`) and **befo
 ## 1. The obvious questions
 These are what anyone would ask on first seeing six years of LCA filings. Each is answered by a count, a share or a grouped median, and most are already well known:
 
-1. Which employers file the most? (Cognizant, Infosys, Tata Consultancy Services, Google, Amazon; the top 10 are 15% of all filings)
+1. Which employers file the most? (Infosys, Tata Consultancy Services, Google, Amazon, Ernst & Young; the top 10 are 16% of all filings; Fig. 15)
 2. Which jobs are filed for? (Mostly software: "Software Developers, Applications" alone is 30%, and computer titles together 65%; Fig. 4)
 3. Where are the jobs? (California, Texas, New York lead; the top 15 states hold 83%; Fig. 3)
 4. How many filings are certified? (91%; only 0.87% are denied; Fig. 6)

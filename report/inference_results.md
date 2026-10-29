@@ -44,7 +44,7 @@ Planned in `report/preregistration.md`; each test run once. Confirmation set cle
 By year: FY2017: +12.17% [+9.79%, +14.60%], FY2018: +7.96% [+6.03%, +9.93%], FY2020: +8.47% [+6.48%, +10.50%], FY2021: +8.23% [+6.15%, +10.36%], FY2022: +8.13% [+6.09%, +10.22%]
 
 **T2**
-- employer-level paired t (one gap per employer): mean gap = 0.052, t = 6.59, df = 694, p = 8.71e-11, employers = 695, share of employers with E-3 higher = 0.553
+- employer-level paired t (one gap per employer): mean gap = 0.052, t = 6.59, df = 694, p = 8.71e-11, employers = 695, employers with a non-zero gap = 604, share of employers with E-3 higher = 0.553
 
 **T3**
 - logit with size x year FE, employer-clustered: OR = 3.8, z = 24.9, p = 2.58e-137
@@ -53,6 +53,6 @@ By year: FY2017: +4.799 pp [+3.410 pp, +6.188 pp], FY2018: +6.553 pp [+5.041 pp,
 
 **T4**
 - Cochran-Mantel-Haenszel by employer x year (ignores clustering): pooled MH odds ratio = 1.89, chi2 = 20, p = 7.61e-06, informative strata = 449
-- employer-level paired t (one gap per employer): mean gap = 0.00589, t = 2.37, df = 1546, p = 0.0178, employers = 1547, share of employers with E-3 higher = 0.0498
+- employer-level paired t (one gap per employer): mean gap = 0.00589, t = 2.37, df = 1546, p = 0.0178, employers = 1547, employers with a non-zero gap = 306, share of employers with E-3 higher = 0.0498
 
 ![by year](../figures/fig14_inference_by_year.png)

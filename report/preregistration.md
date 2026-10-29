@@ -84,7 +84,7 @@ With ~800k filings, almost any difference will be statistically significant; the
 - **Estimand caveat:** employers that file both visas in one year are mostly mid-sized and large, where denials are rare, so this answers the question for those employers.
 - **Other tests considered:**
   - *Cochran–Mantel–Haenszel test by employer × year:* the standard test for a 2×2 gap within many groups; gives an odds ratio, not pp. Run as a check.
-  - *Logistic regression with employer dummies:* with 1,547-plus dummies and most employer-years having no denial, the odds ratios come out biased.
+  - *Logistic regression with employer dummies:* with thousands of employer dummies (6,309 employers in exploration) and most employer-years having no denial, the odds ratios come out biased.
   - *Wilcoxon signed-rank on employer gaps:* most employers have a zero gap, and it would repeat the paired t.
 - **Checks:** CMH by employer × year; paired t on employer gaps.
 
